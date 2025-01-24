@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block title %}List of Cases{% endblock %}
+
+{% block content %}
+<h2>List of Cases</h2>
+<ul>
+    <li><a href="{{ url_for('segmentation', case_id=1) }}">Case 1</a></li>
+    <li><a href="{{ url_for('segmentation', case_id=2) }}">Case 2</a></li>
+    <!-- Add more cases as needed -->
+</ul>
+{% endblock %}
