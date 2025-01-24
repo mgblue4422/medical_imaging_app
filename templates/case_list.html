@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Case List</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}"> <!-- Optional CSS -->
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('case_list') }}">List of Cases</a>
+    </nav>
+    
+    <h1>Case List</h1>
+    <ul>
+        {% for case in cases %}
+            <li>
+                <a href="{{ url_for('case_detail', case_id=case.id) }}">{{ case.name }}</a>
+            </li>
+        {% endfor %}
+    </ul>
+    
+    <a href="{{ url_for('index') }}">Back to Home</a>
+</body>
+</html>

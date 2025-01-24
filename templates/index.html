@@ -1,8 +1,21 @@
-{% extends 'base.html' %}
 
-{% block title %}Home{% endblock %}
 
-{% block content %}
-<h2>Welcome to the Medical Imaging App</h2>
-<p>This application allows you to view and analyze medical images.</p>
-{% endblock %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Imaging App</title>
+</head>
+<body>
+    <h1>Welcome to the Medical Imaging App</h1>
+
+    <h1>Medical Imaging Application</h1>
+        <nav>
+            <a href="{{ url_for('index') }}">Home</a>
+            <a href="{{ url_for('case_list') }}">List of Cases</a>
+        </nav>
+  
+</body>
+</html>
