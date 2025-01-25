@@ -1,8 +1,10 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify, request
 import numpy as np
 import matplotlib.pyplot as plt
 import os
 from PIL import Image
+import io
+import base64
 
 
 app = Flask(__name__)
@@ -97,6 +99,41 @@ def case_detail(case_id):
         return render_template('case_detail.html', case=case, result_image=f'result_{case_id}.png')
     
     return "Case not found", 404
+
+@app.route('/feature_examples')
+def features():
+    return render_template('feature_examples.html')
+
+# Server side plotting example
+@app.route('/plot_sin', methods=['POST'])
+def plot_sin():
+    data = request.get_json()  # Parse JSON body
+    x_value = float(data['x_value'])
+
+    # Generate the plot
+    x = np.linspace(-10, 10, 100)
+    y = np.sin(x * x_value)
+
+    fig, ax = plt.subplots()
+    ax.plot(x, y)
+    ax.set_title('Dynamic Sin(x) Plot')
+
+    # Enable grid
+    ax.grid(True)
+
+    # Customize x-axis labels (multiples of pi)
+    pi_ticks = np.pi * np.arange(-3, 4, 1)  # Ticks at -3π, -2π, ..., 2π, 3π
+    ax.set_xticks(pi_ticks)  # Set x-ticks to multiples of π
+    ax.set_xticklabels([f'{int(i / np.pi)}π' if i != 0 else '0' for i in pi_ticks])  # Label with multiples of π
+
+    # Save plot to a BytesIO stream
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png')
+    buf.seek(0)
+    plot_data = base64.b64encode(buf.read()).decode('utf-8')
+    buf.close()
+
+    return jsonify({'plot': plot_data})
 
 if __name__ == '__main__':
     app.run(debug=True)
