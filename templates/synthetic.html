@@ -10,32 +10,83 @@
             font-family: 'Fira Sans', sans-serif;
             margin: 0;
             padding: 20px;
+            background-color: #f4f4f9;
         }
-        img {
-            max-width: 100%;
+
+        h1, h2 {
+            color: #333;
+            text-align: center;
+        }
+
+        /* Flex container for side-by-side images */
+        .image-container {
+            display: flex;
+            justify-content: space-between;  /* Ensures images are spaced evenly */
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .image-container div {
+            flex: 1; /* Ensures equal width for both images */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .image-container img {
+            max-width: 90%;  /* Allows for some space around the image */
             height: auto;
+            border: 2px solid #ddd;
+            border-radius: 8px;
         }
+
+        /* Table styles */
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
+            background-color: #fff;
         }
+
         th, td {
             border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
+            padding: 12px;
+            text-align: center;
         }
+
         th {
             background-color: #007BFF;
             color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
         }
     </style>
 </head>
 <body>
     <h1>Image Comparison</h1>
+
+    <!-- Flexbox container for displaying images side by side -->
+    <div class="image-container">
+        <div>
+            <h2>Real Data (CTP)</h2>
+            <img src="{{ url_for('static', filename='images/case1.png') }}" alt="Real Data">
+        </div>
+
+        <div>
+            <h2>Synthetic Data (CTP)</h2>
+            <img src="{{ url_for('static', filename='images/case2.jpeg') }}" alt="Synthetic Data">
+        </div>
+    </div>
+
+    <!-- Comparison Table -->
+    <h2>Comparison Table</h2>
     <div>
-        <h2>Real Data (CTP)</h2>
-        <img src="{{ url_for('static', filename='images/case1.png') }}" alt="Real Data">
-        <h2>Synthetic Data (CTP)</h2>
-        <img src="{{ url_for('static', filename='images/case2.jpeg') }}" alt="Synthetic Data">
+        {{ table | safe }}  <!-- Renders the dynamic table from Flask -->
+    </div>
+
+</body>
+</html>
+>
 
