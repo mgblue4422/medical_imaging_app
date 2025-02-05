@@ -52,7 +52,7 @@ def index():
     # Convert the DataFrame to HTML
     table_html = comparison_table.to_html(index=False)
 
-    return render_template('index.html', table=table_html)
+    return render_template('synthetic.html', table=table_html)
 
 if __name__ == '__main__':
     app.run(debug=True)
