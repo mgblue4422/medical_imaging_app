@@ -3,7 +3,7 @@ from flask import Flask, render_template, request, redirect, url_for
 app = Flask(__name__)
 
 
-# Hjemmeside rute for login skjemaet
+# Hjemmeside rute for login-skjemaet
 @app.route('/')
 def index():
     return render_template('login.html')  # Din login.html
@@ -16,11 +16,10 @@ def login():
     username = request.form['username']
     password = request.form['password']
 
-    # Her kan du gjøre validering av brukernavn og passord
-    # Eksempel på en enkel sjekk (du kan endre tilpasset innlogging for ditt system)
+    # Enkel sjekk for brukernavn og passord (kan endres til databasevalidering)
     if username == 'admin' and password == 'admin':  # Eksempel på hardkodede verdier
         # Hvis pålogging er vellykket, send brukeren videre til BAC.html
-        return redirect(url_for('bac'))  # Omstyrer til BAC.html
+        return redirect(url_for('bac'))  # Omdirigerer til BAC.html
     else:
         return "Invalid login", 403  # Feilmelding ved feil innlogging
 
@@ -33,4 +32,3 @@ def bac():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
