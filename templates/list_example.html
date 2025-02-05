@@ -126,6 +126,11 @@
         .slider-container {
             margin-top: 20px;
         }
+
+        .sublist {
+    display: none; /* Hide sublist by default */
+    padding-left: 1em; /* Indent sublist */
+}
     </style>
 </head>
 <body>
@@ -136,7 +141,15 @@
         <div class="content">
             <div class="sidebar">
                 <ul>
-                    <li data-feature="plot">Dynamic Plot</li>
+                    <li data-feature="plot">Dynamic Plot
+                    <ul class="sublist">
+                    <li data-feature="c">C </li>
+                    <li data-feature="b">B</li>
+                    <li data-feature="a">A</li>
+
+                    </ul>
+
+                    </li>
 
                     <li data-feature="ui-elements">UI Features</li>
                     <li data-feature="image">Image Overlay</li>
@@ -186,6 +199,15 @@
                     </div>
                 </div>
 
+
+                <div id="a" class="feature-content">
+                    <h3>Case example A</h3>
+                    <div class="slider-container">
+                        <input type="range" id="slider" min="-5" max="5" step="0.1" value="1">
+                        <p>Adjust x-value (Current: <span id="slider-value">1</span>)</p>
+                    </div>
+                    <img id="plot-image" src="" alt="Dynamic Plot">
+                </div>
                 <!-- Image Overlay -->
                 <div id="image" class="feature-content">
                     <h3>Image Overlay</h3>
@@ -201,17 +223,46 @@
         </div>
     </div>
     <script>
+
         // Sidebar navigation
-        document.querySelectorAll('.sidebar ul li').forEach(item => {
+        document.querySelectorAll('.sidebar >ul > li').forEach(item => {
             item.addEventListener('click', () => {
+                // Prevent the click event from bubbling up to parent items
+                event.stopPropagation();
+
+                // Toggle the visibility of the sublist
+        const sublist = item.querySelector('.sublist');
+        if (sublist) {
+            sublist.style.display = sublist.style.display === 'block' ? 'none' : 'block';
+        }
+
                 document.querySelectorAll('.feature-content').forEach(content => {
                     content.classList.remove('active');
                 });
                 const featureId = item.getAttribute('data-feature');
-                document.getElementById(featureId).classList.add('active');
+                if (featureId) {
+            document.getElementById(featureId).classList.add('active');
+        }
             });
         });
+// Add event listeners for sub-list items
+document.querySelectorAll('.sidebar .sublist li').forEach(subItem => {
+    subItem.addEventListener('click', (event) => {
+        // Prevent the click event from bubbling up to parent items
+        event.stopPropagation();
 
+        // Hide all feature contents
+        document.querySelectorAll('.feature-content').forEach(content => {
+            content.classList.remove('active');
+        });
+
+        // Get the feature ID from the clicked sub-item
+        const subFeatureId = subItem.getAttribute('data-feature');
+        if (subFeatureId) {
+            document.getElementById(subFeatureId).classList.add('active');
+        }
+    });
+});
         // Dynamic Sin(x) plot
         const slider = document.getElementById('slider');
         const sliderValue = document.getElementById('slider-value');
