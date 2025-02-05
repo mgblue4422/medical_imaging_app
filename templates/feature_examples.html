@@ -52,6 +52,14 @@
             background: #007BFF;
             color: white;
         }
+
+        .sidebar.collapsed {
+    width: 0;
+    padding: 0;
+    overflow: hidden;
+    transition: width 0.3s;
+}
+
         .impressum {
             text-align: center;
             padding: 1em;
@@ -132,6 +140,8 @@
     <div class="container">
         <div class="header">
             Feature Implementation Examples
+            <button id="toggle-sidebar" style="margin-left: 10px;">Toggle Sidebar</button>
+
         </div>
         <div class="content">
             <div class="sidebar">
@@ -296,7 +306,13 @@
             // Update the plot with x=1
             updatePlot(1);
         });
+// Toggle sidebar functionality
+const toggleButton = document.getElementById('toggle-sidebar');
+const sidebar = document.querySelector('.sidebar');
 
+toggleButton.addEventListener('click', () => {
+    sidebar.classList.toggle('collapsed');
+});
     </script>
 </body>
 </html>
