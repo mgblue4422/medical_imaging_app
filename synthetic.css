@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Comparison</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"> <!-- Link to CSS file -->
+</head>
+<body>
+    <h1>Image Comparison</h1>
+
+    <!-- Flexbox container for displaying images side by side -->
+    <div class="image-container">
+        <div>
+            <h2>Real Data (CTP)</h2>
+            <img src="{{ url_for('static', filename='images/case1.png') }}" alt="Real Data">
+        </div>
+
+        <div>
+            <h2>Synthetic Data (CTP)</h2>
+            <img src="{{ url_for('static', filename='images/case2.jpeg') }}" alt="Synthetic Data">
+        </div>
+    </div>
+
+    <!-- Flexbox container for plotting side by side -->
+    <div class="plot-container">
+        <div>
+            <h2>Real Data Plot</h2>
+            <img src="{{ url_for('static', filename='images/plot1.png') }}" alt="Real Data Plot">
+        </div>
+
+        <div>
+            <h2>Synthetic Data Plot</h2>
+            <img src="{{ url_for('static', filename='images/plot2.png') }}" alt="Synthetic Data Plot">
+        </div>
+    </div>
+
+    <!-- Comparison Table -->
+    <h2>Comparison Table</h2>
+    <div>
+        {{ table | safe }}  <!-- Renders the dynamic table from Flask -->
+    </div>
+
+    <!-- Optional Footer -->
+    <footer>
+        <p>&copy; 2025 Image Comparison Project</p>
+    </footer>
+
+</body>
+</html>
