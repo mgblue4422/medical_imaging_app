@@ -1,0 +1,65 @@
+<!-- static/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Load the patient</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Medical CTP Analysis Platform</h1>
+            <div id="user-info">
+                <span id="doctor-name">Dr. XXXXX</span>
+                <button onclick="logout()">Logout</button>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="patient-list">
+                <h2>Patients</h2>
+                <button onclick="showAddPatientModal()">Add New Patient</button>
+                <div id="patient-search">
+                    <input type="text" placeholder="Search patients...">
+                </div>
+                <div id="patients">
+                    <!-- Patient list will be populated here -->
+                </div>
+            </div>
+
+            <div class="patient-details">
+                <h2>Patient Details</h2>
+                <div id="selected-patient">
+                    <!-- Selected patient details will appear here -->
+                </div>
+                <div class="scan-viewer">
+                    <h3>CTP Scan Viewer</h3>
+                    <div id="scan-container">
+                        <img id="current-scan" src="" alt="No scan selected">
+                        <div class="scan-controls">
+                            <button onclick="zoomIn()">Zoom In</button>
+                            <button onclick="zoomOut()">Zoom Out</button>
+                            <button onclick="resetView()">Reset</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Patient Modal -->
+    <div id="add-patient-modal" class="modal">
+        <div class="modal-content">
+            <h2>Add New Patient</h2>
+            <form id="add-patient-form">
+                <input type="text" placeholder="Patient Name" required>
+                <input type="date" placeholder="Date of Birth" required>
+                <input type="text" placeholder="Patient ID" required>
+                <button type="submit">Add Patient</button>
+                <button type="button" onclick="closeModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
