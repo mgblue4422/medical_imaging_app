@@ -153,7 +153,17 @@
 
                     <li data-feature="ui-elements">UI Features</li>
                     <li data-feature="image">Image Overlay</li>
+
+                    <li data-feature="cases">Cases
+            <ul class="sublist">
+                {% for case in cases %}
+                    <li>
+                        <a href="{{ url_for('case_detail', case_id=case.id) }}">{{ case.name }}</a>
+                    </li>
+                {% endfor %}
                 </ul>
+                </ul>
+        </li>
             </div>
             <div class="main">
                 <!-- Dynamic Plot -->
