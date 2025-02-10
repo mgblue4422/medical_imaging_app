@@ -1,0 +1,11 @@
+<!-- search_patient.html -->
+
+
+{% block content %}
+<h2>Search for a Patient</h2>
+<form method="POST" action="{{ url_for('patients.search_patient') }}">
+    <label for="search">Patient Name:</label>
+    <input type="text" id="search" name="search" required>
+    <input type="submit" value="Search">
+</form>
+{% endblock %}

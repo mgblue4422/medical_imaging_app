@@ -1,8 +1,11 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify
+from patients import patients_bp  # Import the patients blueprint
 
 
 app = Flask(__name__)
 
+# Register the patients blueprint
+app.register_blueprint(patients_bp, url_prefix='/patients')
 # Hjemmeside rute for login-skjemaet
 @app.route('/')
 def index():
@@ -35,8 +38,11 @@ def bac():
 def section(section_name):
     if section_name == 'home':
         return render_template('home.html')  # Render home.html
+
     elif section_name == 'patients':
-        return '<h2>Patients Section</h2><p>This is where you can manage patients.</p>'#render_template('patients.html')  # Render patients.html
+        #return render_template('patients.html')
+        return redirect(url_for('patients.patients'))  # Redirect to the patients blueprint
+        #return '<h2>Patients Section</h2><p>This is where you can manage patients.</p>'#render_template('patients.html')  # Render patients.html
     elif section_name == 'analysis':
         return   '<h2>Analysis Section</h2><p>This is where you can perform analysis.</p>'#render_template('analysis.html')  # Render analysis.html
     else:
