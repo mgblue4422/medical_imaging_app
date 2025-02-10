@@ -149,6 +149,7 @@
                     <li data-feature="case-analysis">Case Analysis</li>
                     <li data-feature="patient-info">Patient Information</li>
                     <li data-feature="doctor-notes">Doctor's Notes</li>
+                    <li data-feature="Segmentation">Segmentationz</li>
                     <li class="dropdown">
                         <span>Data Type</span>
                         <div class="dropdown-content">
@@ -175,13 +176,15 @@
 
                 <!-- All Other Sections Here -->
                 <div id="patient-info" class="feature-content">
-                    <h3>Patient Information</h3>
                     <div class="note-box">
-                        <p><strong>Name:</strong> XXX</p>
-                        <p><strong>Age:</strong> XXX</p>
-                        <p><strong>Diagnosis:</strong> XXX</p>
-                        <p><strong>Medical History:</strong> XXX</p>
-                    </div>
+         <label><strong>Name:</strong> <input type="text" id="patient-name" value="XXX"></label><br><br>
+    <label><strong>Age:</strong> <input type="number" id="patient-age" value="XXX"></label><br><br>
+    <label><strong>Diagnosis:</strong> <input type="text" id="patient-diagnosis" value="XXX"></label><br><br>
+    <label><strong>Medical History:</strong></label><br>
+    <textarea id="patient-history">XXX</textarea><br><br>
+    <button id="save-patient-info" style="background-color: #6db3f2; color: white; border: none; padding: 0.8em; border-radius: 5px; cursor: pointer;">Save</button>
+</div>
+
                 </div>
                 <div id="doctor-notes" class="feature-content">
                     <h3>Doctor's Notes</h3>
@@ -265,6 +268,15 @@
         const sidebar = document.querySelector('.sidebar');
         toggleButton.addEventListener('click', () => {
             sidebar.classList.toggle('collapsed');
+            document.getElementById('save-patient-info').addEventListener('click', function() {
+    const name = document.getElementById('patient-name').value;
+    const age = document.getElementById('patient-age').value;
+    const diagnosis = document.getElementById('patient-diagnosis').value;
+    const history = document.getElementById('patient-history').value;
+
+    alert(`Patient Info Updated:\nName: ${name}\nAge: ${age}\nDiagnosis: ${diagnosis}\nMedical History: ${history}`);
+});
+
         });
     </script>
 </body>
