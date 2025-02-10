@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hjerneslag Bildeanalyse</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #eefaff;
+            padding: 20px;
+        }
+        .toolbar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            background-color: #1c3b57;
+            padding: 10px 0;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+        }
+        .toolbar button {
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        .toolbar button img {
+            width: 32px;
+            height: 32px;
+            filter: invert(100%);
+        }
+        .upload-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .image-preview-container {
+            display: flex;
+            justify-content: space-around;
+            gap: 20px;
+        }
+        .image-container {
+            position: relative;
+            width: 45%;
+            background-color: white;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .image-container img {
+            width: 100%;
+            max-height: 500px;
+            transition: transform 0.25s ease;
+            cursor: grab;
+            position: relative;
+        }
+        .analysis-results {
+            margin-top: 40px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .analysis-results h3 {
+            color: #3a8ec3;
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <button id="zoom-in"><img <img src="/static/images/img.png" alt="Zoom inn"> </button>
+        <button id="zoom-out"><img <img src="/static/images/img_1.png" alt alt="Zoom ut"></button>
+        <button id="rotate"><img src="/static/images/img_2.png"  alt="Roter"></button>
+        <button id="pan"><img src="/static/images/img_3.png"  alt="Pan"></button>
+        <button id="window-level"><img src="/static/images/img_4.png"  alt="Window Level"></button>
+    </div>
+
+    <div class="upload-container">
+        <h2>Last opp CTP eller MRI-bilder</h2>
+        <form id="upload-form" enctype="multipart/form-data">
+            <div>
+                <label for="image-upload-1">Velg bilde 1 (CTP eller MRI):</label>
+                <input type="file" id="image-upload-1" name="image1" accept="image/*" required>
+            </div>
+            <div>
+                <label for="image-upload-2">Velg bilde 2 (CTP eller MRI):</label>
+                <input type="file" id="image-upload-2" name="image2" accept="image/*" required>
+            </div>
+        </form>
+    </div>
+
+    <div class="image-preview-container">
+        <div class="image-container" id="image-container-1">
+            <h3>Bilde 1</h3>
+            <img id="image-1" alt="Forhåndsvisning bilde 1">
+        </div>
+        <div class="image-container" id="image-container-2">
+            <h3>Bilde 2</h3>
+            <img id="image-2" alt="Forhåndsvisning bilde 2">
+        </div>
+    </div>
+
+    <div class="analysis-results" id="analysis-results" style="display:none;">
+        <h3>Analyse Resultater</h3>
+        <p>Bildene er analysert. Her er resultatene:</p>
+        <ul>
+            <li><strong>Iskemisk skade:</strong> 45% av hjernen er påvirket.</li>
+            <li><strong>Blodstrøm:</strong> Redusert perfusjon i venstre hjernehalvdel.</li>
+            <li><strong>Anbefaling:</strong> Umiddelbar behandling med trombolyse.</li>
+        </ul>
+    </div>
+
+    <script>
+        let isPanning = false;
+        let startX = 0, startY = 0;
+        let currentX = 0, currentY = 0;
+
+        const setupImageTools = (imgElement, containerId) => {
+            let scale = 1;
+            let rotation = 0;
+
+            document.getElementById("zoom-in").addEventListener("click", function () {
+                scale += 0.1;
+                imgElement.style.transform = `scale(${scale}) rotate(${rotation}deg) translate(${currentX}px, ${currentY}px)`;
+            });
+
+            document.getElementById("zoom-out").addEventListener("click", function () {
+                scale = Math.max(scale - 0.1, 0.5);
+                imgElement.style.transform = `scale(${scale}) rotate(${rotation}deg) translate(${currentX}px, ${currentY}px)`;
+            });
+
+            document.getElementById("rotate").addEventListener("click", function () {
+                rotation += 90;
+                imgElement.style.transform = `scale(${scale}) rotate(${rotation}deg) translate(${currentX}px, ${currentY}px)`;
+            });
+
+            document.getElementById("window-level").addEventListener("click", function () {
+                imgElement.style.filter = imgElement.style.filter === "brightness(1.5)" ? "brightness(1)" : "brightness(1.5)";
+            });
+
+            imgElement.addEventListener("mousedown", function (e) {
+                if (isPanning) {
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    imgElement.style.cursor = "grabbing";
+                }
+            });
+
+            document.addEventListener("mousemove", function (e) {
+                if (isPanning) {
+                    const dx = e.clientX - startX;
+                    const dy = e.clientY - startY;
+                    currentX += dx / scale;
+                    currentY += dy / scale;
+                    imgElement.style.transform = `scale(${scale}) rotate(${rotation}deg) translate(${currentX}px, ${currentY}px)`;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                }
+            });
+
+            document.addEventListener("mouseup", function () {
+                imgElement.style.cursor = "grab";
+            });
+
+            document.getElementById("pan").addEventListener("click", function () {
+                isPanning = !isPanning;
+                imgElement.style.cursor = isPanning ? "grab" : "default";
+            });
+        };
+
+        document.getElementById("image-upload-1").addEventListener("change", function (e) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const imgElement = document.getElementById("image-1");
+                imgElement.src = e.target.result;
+                setupImageTools(imgElement, "image-container-1");
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        });
+
+        document.getElementById("image-upload-2").addEventListener("change", function (e) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const imgElement = document.getElementById("image-2");
+                imgElement.src = e.target.result;
+                setupImageTools(imgElement, "image-container-2");
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        });
+    </script>
+</body>
+</html>
