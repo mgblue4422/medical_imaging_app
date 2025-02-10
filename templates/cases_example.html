@@ -135,6 +135,24 @@
             cursor: pointer;
             width: 100%;
         }
+        #image-display {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 4 images per row */
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        #image-display img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        #image-display img.visible {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -174,40 +192,31 @@
                     <div id="analysis-results"></div>
                 </div>
 
-                <!-- All Other Sections Here -->
+                <!-- Segmentation with Image Carousel -->
+                <div id="Segmentation" class="feature-content">
+                    <h3>Segmentation</h3>
+                    <div class="file-upload-container">
+                        <p><strong>Select Multiple Images to Upload</strong></p>
+                        <input type="file" id="segmentation-file-upload" multiple accept="image/*">
+                    </div>
+                    <div class="slider-container">
+                        <label for="image-slider">Select Slide Index:</label>
+                        <input type="range" id="image-slider" min="1" value="1" step="1">
+                        <span id="image-index">1</span> set(s) displayed
+                    </div>
+                    <div id="image-display"></div>
+                </div>
+
+                <!-- Other Sections -->
                 <div id="patient-info" class="feature-content">
                     <div class="note-box">
-         <label><strong>Name:</strong> <input type="text" id="patient-name" value="XXX"></label><br><br>
-    <label><strong>Age:</strong> <input type="number" id="patient-age" value="XXX"></label><br><br>
-    <label><strong>Diagnosis:</strong> <input type="text" id="patient-diagnosis" value="XXX"></label><br><br>
-    <label><strong>Medical History:</strong></label><br>
-    <textarea id="patient-history">XXX</textarea><br><br>
-    <button id="save-patient-info" style="background-color: #6db3f2; color: white; border: none; padding: 0.8em; border-radius: 5px; cursor: pointer;">Save</button>
-</div>
-
-                </div>
-                <div id="doctor-notes" class="feature-content">
-                    <h3>Doctor's Notes</h3>
-                    <div class="note-box">
-                        <textarea id="doctor-notes-text" placeholder="Enter notes here..."></textarea>
+                        <label><strong>Name:</strong> <input type="text" id="patient-name" value="XXX"></label><br><br>
+                        <label><strong>Age:</strong> <input type="number" id="patient-age" value="XXX"></label><br><br>
+                        <label><strong>Diagnosis:</strong> <input type="text" id="patient-diagnosis" value="XXX"></label><br><br>
+                        <label><strong>Medical History:</strong></label><br>
+                        <textarea id="patient-history">XXX</textarea><br><br>
+                        <button id="save-patient-info" style="background-color: #6db3f2; color: white; border: none; padding: 0.8em; border-radius: 5px; cursor: pointer;">Save</button>
                     </div>
-                </div>
-                <!-- New Data Sections -->
-                <div id="cta" class="feature-content">
-                    <h3>CTA Data</h3>
-                    <p>Details related to CTA will appear here.</p>
-                </div>
-                <div id="ctp" class="feature-content">
-                    <h3>CTP Data</h3>
-                    <p>Details related to CTP will appear here.</p>
-                </div>
-                <div id="nckt" class="feature-content">
-                    <h3>NCKT Data</h3>
-                    <p>Details related to NCKT will appear here.</p>
-                </div>
-                <div id="mri" class="feature-content">
-                    <h3>MRI Data</h3>
-                    <p>Details related to MRI will appear here.</p>
                 </div>
             </div>
         </div>
@@ -235,49 +244,47 @@
             });
         });
 
-        // Handle file upload and display content
-        const fileUpload = document.getElementById('file-upload');
-        const uploadedFiles = document.getElementById('uploaded-files');
-        const analysisResults = document.getElementById('analysis-results');
-        const fileHeader = document.getElementById('file-header');
+        // Handle file upload for segmentation and image carousel
+        const fileUploadSegmentation = document.getElementById('segmentation-file-upload');
+        const imageDisplay = document.getElementById('image-display');
+        const imageSlider = document.getElementById('image-slider');
+        const imageIndexLabel = document.getElementById('image-index');
 
-        fileUpload.addEventListener('change', (event) => {
-            uploadedFiles.innerHTML = '';
-            analysisResults.innerHTML = '';
+        let images = [];
 
-            if (event.target.files.length > 0) {
-                fileHeader.textContent = `Selected File: ${event.target.files[0].name}`;
-            } else {
-                fileHeader.textContent = '';
-            }
+        fileUploadSegmentation.addEventListener('change', (event) => {
+            imageDisplay.innerHTML = '';  // Clear current image display
+            images = Array.from(event.target.files);  // Store files in images array
+            updateSlider();  // Update the slider range and value
+            displayImages();  // Display the first set of images
+        });
 
-            Array.from(event.target.files).forEach(file => {
-                const fileItem = document.createElement('p');
-                fileItem.textContent = `Uploaded: ${file.name}`;
-                uploadedFiles.appendChild(fileItem);
+        imageSlider.addEventListener('input', () => {
+            imageIndexLabel.textContent = imageSlider.value;  // Update slider value label
+            displayImages();  // Display the appropriate set of images
+        });
 
-                // Simulate regional analysis
-                const analysisItem = document.createElement('p');
-                analysisItem.textContent = `Analysis result for ${file.name}: Region analysis complete.`;
-                analysisResults.appendChild(analysisItem);
+        function updateSlider() {
+            const numSets = Math.ceil(images.length / 4);  // Calculate total sets of images
+            imageSlider.max = numSets;
+            imageSlider.value = 1;  // Reset to first set
+            imageIndexLabel.textContent = 1;
+        }
+
+        function displayImages() {
+            imageDisplay.innerHTML = '';  // Clear current images
+            const batchSize = 4;  // Number of images per set
+            const startIdx = (parseInt(imageSlider.value) - 1) * batchSize;  // Calculate start index of the current batch
+            const imagesToDisplay = images.slice(startIdx, startIdx + batchSize);  // Get the current batch
+
+            // Loop through the current batch and display each image
+            imagesToDisplay.forEach(imgFile => {
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(imgFile);
+                img.classList.add('visible'); // Ensure it's shown with smooth fade-in
+                imageDisplay.appendChild(img);
             });
-        });
-
-        // Sidebar toggle button
-        const toggleButton = document.getElementById('toggle-sidebar');
-        const sidebar = document.querySelector('.sidebar');
-        toggleButton.addEventListener('click', () => {
-            sidebar.classList.toggle('collapsed');
-            document.getElementById('save-patient-info').addEventListener('click', function() {
-    const name = document.getElementById('patient-name').value;
-    const age = document.getElementById('patient-age').value;
-    const diagnosis = document.getElementById('patient-diagnosis').value;
-    const history = document.getElementById('patient-history').value;
-
-    alert(`Patient Info Updated:\nName: ${name}\nAge: ${age}\nDiagnosis: ${diagnosis}\nMedical History: ${history}`);
-});
-
-        });
+        }
     </script>
 </body>
 </html>

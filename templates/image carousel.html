@@ -10,7 +10,7 @@
             font-family: 'Fira Sans', sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f5f9fc; /* Light blue background */
+            background-color: #f5f9fc;
             color: #333;
         }
         .container {
@@ -21,7 +21,7 @@
         .header {
             text-align: center;
             padding: 1.5em;
-            background: #6db3f2; /* Light blue */
+            background: #6db3f2;
             color: white;
             font-size: 1.8em;
             border-bottom: 2px solid #5a9bd4;
@@ -29,14 +29,16 @@
         .content {
             display: flex;
             flex: 1;
-            margin-top: 20px;
+            padding: 20px;
+            gap: 20px;
         }
         .sidebar {
-            width: 25%;
-            background: #e9f3fc; /* Light background for sidebar */
+            width: 20%;
+            background: #e9f3fc;
             padding: 1em;
             box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
             border-right: 2px solid #c1d9ef;
+            border-radius: 8px;
         }
         .sidebar ul {
             list-style-type: none;
@@ -47,7 +49,7 @@
             cursor: pointer;
             padding: 0.8em;
             border-radius: 8px;
-            background: #c1e0fa; /* Light blue buttons */
+            background: #c1e0fa;
             transition: background 0.3s;
         }
         .sidebar ul li:hover {
@@ -60,7 +62,6 @@
             background: white;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
-            margin-left: 20px;
             overflow-y: auto;
         }
         .impressum {
@@ -70,40 +71,72 @@
             font-size: 0.8em;
             color: #555;
         }
-        .feature-content {
-            display: none;
-        }
-        .feature-content.active {
-            display: block;
-        }
-        .slider-container {
-            margin-top: 20px;
-        }
-        #image-display {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr); /* 4 images per row */
-            gap: 10px;
+        .carousel-container {
+            perspective: 1000px;
+            margin: 20px auto;
+            position: relative;
+            width: 80%;
+            display: flex;
             justify-content: center;
-            margin-top: 20px;
+            align-items: center;
         }
-        #image-display img {
-            width: 100%;
-            height: auto;
-            border-radius: 8px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-            opacity: 0;
-            transition: opacity 0.3s ease;
+        .carousel {
+            display: flex;
+            transform-style: preserve-3d;
+            transition: transform 0.8s;
         }
-        #image-display img.visible {
-            opacity: 1;
+        .carousel img {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin: 0 10px;
+            transform-origin: center center;
+            transition: transform 0.8s;
+            backface-visibility: hidden;
+        }
+        .carousel img.center {
+            transform: scale(1.5);
+            z-index: 1;
+        }
+        .nav-button {
+            background-color: #6db3f2;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.3s;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        #prev {
+            left: -50px;
+        }
+        #next {
+            right: -50px;
+        }
+        .nav-button:hover {
+            background-color: #5a9bd4;
+        }
+        .image-counter {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 1em;
+            color: #333;
+        }
+        .image-label {
+            text-align: center;
+            margin-top: 5px;
+            font-size: 0.9em;
+            color: #555;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            Medical Case Dashboard
-        </div>
+        <div class="header">Medical Case Dashboard</div>
         <div class="content">
             <div class="sidebar">
                 <ul>
@@ -111,76 +144,65 @@
                 </ul>
             </div>
             <div class="main">
-                <div id="segmentation" class="feature-content active">
-                    <h3>Segmentation</h3>
-                    <div class="file-upload-container">
-                        <p><strong>Select Multiple Images to Upload</strong></p>
-                        <input type="file" id="file-upload" multiple accept="image/*">
-                    </div>
-                    <div class="slider-container">
-                        <label for="image-slider">Select Slide Index:</label>
-                        <input type="range" id="image-slider" min="1" value="1" step="1">
-                        <span id="image-index">1</span> set(s) displayed
-                    </div>
-                    <div id="image-display"></div>
+                <h3>Segmentation</h3>
+                <input type="file" id="file-upload" multiple accept="image/*">
+                <div class="carousel-container">
+                    <button class="nav-button" id="prev">&#10094;</button>
+                    <div class="carousel" id="carousel"></div>
+                    <button class="nav-button" id="next">&#10095;</button>
                 </div>
+                <div class="image-counter" id="image-counter">0/0</div>
             </div>
         </div>
-        <div class="impressum">
-            Example Impressum: This page demonstrates various features.
-        </div>
+        <div class="impressum">Example Impressum: This page demonstrates various features.</div>
     </div>
 
     <script>
-        // Automatically show the "Segmentation" feature on page load
-        window.onload = function() {
-            document.getElementById('segmentation').classList.add('active');
-        };
-
-        // Handle file upload
         const fileUpload = document.getElementById('file-upload');
-        const imageDisplay = document.getElementById('image-display');
-        const imageSlider = document.getElementById('image-slider');
-        const imageIndexLabel = document.getElementById('image-index');
+        const carousel = document.getElementById('carousel');
+        const prevBtn = document.getElementById('prev');
+        const nextBtn = document.getElementById('next');
+        const imageCounter = document.getElementById('image-counter');
 
         let images = [];
+        let currentIndex = 0;
 
-        // Function to handle file upload and populate images array
         fileUpload.addEventListener('change', (event) => {
-            imageDisplay.innerHTML = '';  // Clear current image display
-            images = Array.from(event.target.files);  // Store files in images array
-            updateSlider();  // Update the slider range and value
-            displayImages();  // Display the first set of images
+            images = Array.from(event.target.files);
+            currentIndex = 0;
+            displayImages();
         });
 
-        // Handle slider input
-        imageSlider.addEventListener('input', () => {
-            imageIndexLabel.textContent = imageSlider.value;  // Update slider value label
-            displayImages();  // Display the appropriate set of images
+        prevBtn.addEventListener('click', () => {
+            currentIndex = (currentIndex - 1 + images.length) % images.length;
+            displayImages();
         });
 
-        // Function to update slider range based on the number of images
-        function updateSlider() {
-            const numSets = Math.ceil(images.length / 4);  // Calculate total sets of images
-            imageSlider.max = numSets;
-            imageSlider.value = 1;  // Reset to first set
-            imageIndexLabel.textContent = 1;
-        }
+        nextBtn.addEventListener('click', () => {
+            currentIndex = (currentIndex + 1) % images.length;
+            displayImages();
+        });
 
-        // Function to display a batch of images based on the slider value
         function displayImages() {
-            imageDisplay.innerHTML = '';  // Clear current images
-            const batchSize = 4;  // Number of images per set
-            const startIdx = (parseInt(imageSlider.value) - 1) * batchSize;  // Calculate start index of the current batch
-            const imagesToDisplay = images.slice(startIdx, startIdx + batchSize);  // Get the current batch
+            carousel.innerHTML = '';
+            imageCounter.textContent = `${currentIndex + 1}/${images.length}`;
 
-            // Loop through the current batch and display each image
-            imagesToDisplay.forEach(file => {
+            for (let i = 0; i < 4; i++) {
+                const index = (currentIndex + i) % images.length;
+                const imgContainer = document.createElement('div');
                 const img = document.createElement('img');
-                img.src = URL.createObjectURL(file);
-                img.classList.add('visible');  // Add visible class for smooth fade-in effect
-                imageDisplay.appendChild(img);
-            });
+                const label = document.createElement('div');
+
+                img.src = URL.createObjectURL(images[index]);
+                label.textContent = `Image ${index + 1}`;
+                label.classList.add('image-label');
+
+                if (i === 1) img.classList.add('center');
+
+                imgContainer.appendChild(img);
+                imgContainer.appendChild(label);
+                carousel.appendChild(imgContainer);
+            }
         }
     </script>
 </body>
