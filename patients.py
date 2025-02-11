@@ -1,9 +1,11 @@
 from flask import Blueprint, render_template, request, redirect, url_for
+from decorators import login_required
 
 # Initialize the Blueprint
 patients_bp = Blueprint('patients', __name__)
 
 @patients_bp.route('/')
+@login_required
 def patients():
     return render_template('patients.html')  # Render patients.html
 
