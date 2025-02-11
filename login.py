@@ -84,6 +84,8 @@ def login():
         if user and bcrypt.check_password_hash(user.password, form.password.data):
             print("Login successful")
             login_user(user)
+            session['logged_in'] = True  # Set the session variable
+            #session['username'] = user  # Store the username in the session
             return redirect(url_for('bac'))
         else:
             print("Login failed")
