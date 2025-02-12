@@ -122,7 +122,8 @@
         <img src="static/images/Login.png" alt="Medical Logo" class="header-image">
 
         <h2>User Login</h2>
-        <form action="/login" method="POST"> <!-- Skjemaet sender data til /login -->
+        <form method="POST" action="{{ url_for('login') }}"> <!-- Skjemaet sender data til /login -->
+            {{ form.hidden_tag() }}  <!-- Add this line -->
             <div class="input-group">
                 <input type="text" id="username" name="username" required placeholder=" ">
                 <label for="username">Username</label>
@@ -133,6 +134,7 @@
             </div>
             <button type="submit" class="btn">Login</button>
             <a href="#" class="forgot-password">Forgot Password?</a>
+            <p>Don't have an account? <a href="/register" class="forgot-password">Register here</a></p>
         </form>
     </div>
 </body>

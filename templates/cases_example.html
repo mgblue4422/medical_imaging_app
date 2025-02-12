@@ -298,6 +298,26 @@
                 carousel.appendChild(imgContainer);
             }
         }
+        document.querySelectorAll('.sidebar ul li').forEach(item => {
+    item.addEventListener('click', () => {
+        const featureId = item.getAttribute('data-feature');
+
+        if (featureId === "Segmentation") {
+            fetch('segmentation.html') // Load the second page (segmentation.html)
+                .then(response => response.text())
+                .then(html => {
+                    document.querySelector('.main').innerHTML = html; // Replace main content
+                })
+                .catch(error => console.error('Error loading segmentation page:', error));
+        } else {
+            document.querySelectorAll('.feature-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(featureId)?.classList.add('active');
+        }
+    });
+});
+
     </script>
 </body>
 </html>

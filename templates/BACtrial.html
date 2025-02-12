@@ -237,11 +237,23 @@
             <!-- Navigation Bar -->
             <nav>
 
-
+{% if session.get('logged_in') %}
+                <a href="#" onclick="loadSection('patients')">Patients</a>
+            {% else %}
+                <a href="{{ url_for('login') }}">Patients</a>
+            {% endif %}
     <a href="#" onclick="loadSection('home')">Home</a>
-    <a href="#" onclick="loadSection('patients')">Patients</a>
-    <a href="#" onclick="loadSection('analysis')">Analysis</a>
 
+    <a href="#" onclick="loadSection('analysis')">Analysis</a>
+<ul>
+
+            {% if session.get('logged_in') %}
+                <li>Welcome, {{ session.get('username') }}!</li>
+                <li><a href="{{ url_for('logout') }}">Logout</a></li>
+            {% else %}
+                <li><a href="{{ url_for('login') }}">Login</a></li>
+            {% endif %}
+        </ul>
                 </div>x
             </nav>
 <div id="content">
@@ -281,18 +293,40 @@
             </footer>
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <script>
+
+            var isLoggedIn = {{ session.get('logged_in', 'false') | tojson }};
+
+
     function loadSection(section) {
-        $.ajax({
-            url: '/section/' + section,  // Send request to Flask route
-            method: 'GET',
-            success: function(data) {
-                $('#content').html(data);  // Inject the returned content into the content div
-            },
-            error: function() {
-                $('#content').html('<h2>Error loading content</h2>');  // Show error message if something goes wrong
-            }
-        });
+    if (!section) {
+        console.error("Error: Section is undefined!");  // Log the issue
+        return;
     }
+    if (section === "patients" && !isLoggedIn) {
+        window.location.href = "/login";  // Redirect to login if not logged in
+        return;
+    }
+
+
+
+    console.log("Loading section:", section);  // Check what is being passed
+
+    $.ajax({
+        url: '/section/' + section,
+        method: 'GET',
+        success: function(data, status, xhr) {
+    if (xhr.responseURL && xhr.responseURL !== this.url) {
+        window.location.href = xhr.responseURL;  // Redirect the whole page if Flask sends a redirect
+    } else {
+        $('#content').html(data);
+    }
+},
+        error: function() {
+            $('#content').html('<h2>Error loading content</h2>');
+        }
+    });
+}
+
 </script>
 
         </body>
