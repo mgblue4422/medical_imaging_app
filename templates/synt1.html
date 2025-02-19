@@ -1,44 +1,131 @@
-<!-- Legg til denne delen i form -->
-<form id="upload-form" enctype="multipart/form-data">
-    <div class="form-group">
-        <label for="image-upload-1">Velg bilde 1 (CTP eller MRI):</label>
-        <input type="file" id="image-upload-1" name="image1" accept="image/*" required>
-        <label for="image-upload-2">Velg bilde 2 (CTP eller MRI):</label>
-        <input type="file" id="image-upload-2" name="image2" accept="image/*" required>
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bildeanalyse</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {t
+            text-align: center;
+            color: #333;
+        }
+        #imageContainer {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .image-wrapper {
+            flex: 1;
+            margin: 0 10px;
+            text-align: center;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-top: 10px;
+            display: none; /* Skjuler bildet til det er lastet opp */
+        }
+        #results {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #ADD8E6;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #ADD8E6;
+        }
+    </style>
+</head>
+<body>
+    <h1>Data Synthesization</h1>
+    <input type="file" id="realImage" accept="image/*">
+    <input type="file" id="fakeImage" accept="image/*">
+    <button id="analyzeButton">Analyze the Image</button>
+
+    <div id="imageContainer">
+        <div class="image-wrapper">
+            <h3>Real Image:</h3>
+            <img id="realImagePreview" src="" alt="Real Image">
+        </div>
+        <div class="image-wrapper">
+            <h3>Fake image:</h3>
+            <img id="fakeImagePreview" src="" alt="Fake Image">
+        </div>
     </div>
-    <button type="submit">Last opp og analyser bilder</button>
-</form>
 
-<!-- Dynamisk bildevisning -->
-<div id="image-preview"></div>
+    <div id="results"></div>
 
-<script>
-document.getElementById("upload-form").addEventListener("submit", function(event) {
-    event.preventDefault();
+    <script>
+        document.getElementById('realImage').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById('realImagePreview');
+                    img.src = e.target.result;
+                    img.style.display = 'block'; // Viser bildet når det er lastet opp
+                };
+                reader.readAsDataURL(file);
+            }
+        });
 
-    const formData = new FormData();
-    const fileInput1 = document.getElementById("image-upload-1");
-    const fileInput2 = document.getElementById("image-upload-2");
+        document.getElementById('fakeImage').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById('fakeImagePreview');
+                    img.src = e.target.result;
+                    img.style.display = 'block'; // Viser bildet når det er lastet opp
+                };
+                reader.readAsDataURL(file);
+            }
+        });
 
-    formData.append("image1", fileInput1.files[0]);
-    formData.append("image2", fileInput2.files[0]);
+        document.getElementById('analyzeButton').addEventListener('click', async () => {
+            const realImage = document.getElementById('realImage').files[0];
+            const fakeImage = document.getElementById('fakeImage').files[0];
 
-    fetch('/upload', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        // Vis analysen som bilde
-        const image1Result = document.createElement('img');
-        image1Result.src = 'data:image/png;base64,' + btoa(String.fromCharCode.apply(null, new Uint8Array(data.image1_result)));
+            if (!realImage || !fakeImage) {
+                alert("Vennligst last opp begge bildene.");
+                return;
+            }
 
-        const image2Result = document.createElement('img');
-        image2Result.src = 'data:image/png;base64,' + btoa(String.fromCharCode.apply(null, new Uint8Array(data.image2_result)));
+            const formData = new FormData();
+            formData.append('realImage', realImage);
+            formData.append('fakeImage', fakeImage);
 
-        document.getElementById('image-preview').appendChild(image1Result);
-        document.getElementById('image-preview').appendChild(image2Result);
-    })
-    .catch(error => console.error('Error:', error));
-});
-</script>
+            const response = await fetch('/analyze', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                alert("Det oppstod en feil under analysen.");
+                return;
+            }
+
+            const results = await response.json();
+            document.getElementById('results').innerText = JSON.stringify(results, null, 2);
+        });
+    </script>
+</body>
+</html>
