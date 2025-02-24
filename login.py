@@ -7,13 +7,14 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import InputRequired, Length, ValidationError
 from flask_bcrypt import Bcrypt
+from db1 import db1
 
 
 app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/g/PycharmProjects/medical_imaging_app/database.db'
 app.config['SECRET_KEY'] = 'your_secret_key'
-db = SQLAlchemy(app)
+db1.init_app(app)  # Initialize the first db1 instance with the app
 bcrypt = Bcrypt(app)
 
 login_manager = LoginManager()
@@ -26,10 +27,10 @@ def load_user(user_id):
 
 
 
-class User(db.Model, UserMixin):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(20), nullable=False, unique=True)
-    password = db.Column(db.String(80), nullable=False)
+class User(db1.Model, UserMixin):
+    id = db1.Column(db1.Integer, primary_key=True)
+    username = db1.Column(db1.String(20), nullable=False, unique=True)
+    password = db1.Column(db1.String(80), nullable=False)
 
 
 class RegisterForm(FlaskForm):
@@ -119,8 +120,8 @@ def register():
         hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
         # Create a new user
         new_user = User(username=form.username.data, password=hashed_password)
-        db.session.add(new_user)
-        db.session.commit()
+        db1.session.add(new_user)
+        db1.session.commit()
         return redirect(url_for('login'))  # Redirect to login page after registration
     return render_template('register.html', form=form)  # Render registration form
 

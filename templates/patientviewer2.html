@@ -180,9 +180,11 @@
                 </div>
 
                 <!-- Segmentation Section -->
+                <!-- Segmentation Section -->
                 <div id="Segmentation" class="feature-content">
+
                     <h3>Segmentation</h3>
-                    <input type="file" id="segmentation-file-upload" multiple accept="image/*">
+                    <input type="file" id="segmentation-file-upload" multiple>
                     <div class="carousel-container">
                         <button class="nav-button" id="prev">&#10094;</button>
                         <div class="carousel" id="carousel"></div>
@@ -190,6 +192,7 @@
                     </div>
                     <div class="image-counter" id="image-counter">0/0</div>
                 </div>
+
 
                 <!-- Other Sections -->
                 <div id="patient-info" class="feature-content">
@@ -233,10 +236,12 @@
     </div>
 
     <script>
+        console.log('JavaScript is loaded');
         // Existing script for sidebar and file upload handling
         window.onload = function() {
             document.getElementById('case-analysis').classList.add('active');
             document.querySelector('.sidebar ul li[data-feature="case-analysis"]').classList.add('active');
+
         };
 
         document.querySelectorAll('.sidebar ul li').forEach(item => {
@@ -247,6 +252,10 @@
                 const featureId = item.getAttribute('data-feature');
                 if (featureId) {
                     document.getElementById(featureId).classList.add('active');
+                    if (featureId === 'Segmentation') {
+                        initializeCarousel(); // Call this when Segmentation is active
+                }
+
                 }
             });
         });
@@ -267,37 +276,84 @@
             displayImages();
         });
 
-        prevBtn.addEventListener('click', () => {
-            currentIndex = (currentIndex - 1 + images.length) % images.length;
-            displayImages();
-        });
 
-        nextBtn.addEventListener('click', () => {
-            currentIndex = (currentIndex + 1) % images.length;
-            displayImages();
-        });
 
-        function displayImages() {
-            carousel.innerHTML = '';
-            imageCounter.textContent = `${currentIndex + 1}/${images.length}`;
-
-            for (let i = 0; i < 4; i++) {
-                const index = (currentIndex + i) % images.length;
-                const imgContainer = document.createElement('div');
-                const img = document.createElement('img');
-                const label = document.createElement('div');
-
-                img.src = URL.createObjectURL(images[index]);
-                label.textContent = `Image ${index + 1}`;
-                label.classList.add('image-label');
-
-                if (i === 1) img.classList.add('center');
-
-                imgContainer.appendChild(img);
-                imgContainer.appendChild(label);
-                carousel.appendChild(imgContainer);
-            }
+        // Fetch slices from the backend
+// Modify the fetchSlices function to accept parameters
+async function fetchSlices(caseId, sessionName, fileType) {
+    const response = await fetch(`http://127.0.0.1:5000/patients/slices/${caseId}`);
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
         }
+    if (!response.ok) {
+        console.error('Failed to fetch slices:', response.statusText);
+        return [];
+    }
+    const data = await response.json();
+    console.log('Fetched slices:', data.slices); // Log the fetched slices
+    return data.slices;
+}
+
+// Update the initializeCarousel function to pass the parameters
+async function initializeCarousel() {
+    const caseId = 3; // Replace with the actual case ID you want to use
+    //const sessionName = 'example_session'; // Replace with the actual session name
+    //const fileType = 'example_type'; // Replace with the actual file type
+    if (images.length === 0) {
+        console.warn('No images fetched. Please check the backend.');
+        return; // Exit if no images are fetched
+    }
+    images = await fetchSlices(caseId, sessionName, fileType);
+    currentIndex = 0;
+    displayImages();
+}
+
+document.addEventListener('DOMContentLoaded', initializeCarousel);
+console.log('DOM fully loaded and parsed');
+
+prevBtn.addEventListener('click', () => {
+    currentIndex = (currentIndex - 1 + images.length) % images.length;
+    displayImages();
+});
+
+nextBtn.addEventListener('click', () => {
+    currentIndex = (currentIndex + 1) % images.length;
+    displayImages();
+});
+
+function displayImages() {
+    carousel.innerHTML = '';
+    imageCounter.textContent = `${currentIndex + 1}/${images.length}`;
+    if (images.length === 0) {
+        console.warn('No images to display.');
+        return; // Exit if there are no images
+    }
+
+    for (let i = 0; i < 4; i++) {
+        const index = (currentIndex + i) % images.length;
+        const imgContainer = document.createElement('div');
+        const img = document.createElement('img');
+        const label = document.createElement('div');
+        img.src = images[index]; // Use the fetched image URL directly
+        console.log('Displaying image:', img.src); // Log the image source
+
+        //img.src = `http://127.0.0.1:5000/${images[index]}`;
+
+        label.textContent = `Image ${index + 1}`;
+        label.classList.add('image-label');
+
+        if (i === 1) img.classList.add('center');
+
+        imgContainer.appendChild(img);
+        imgContainer.appendChild(label);
+        carousel.appendChild(imgContainer);
+
+    }
+}
+
+
+
+
     </script>
 </body>
 </html>

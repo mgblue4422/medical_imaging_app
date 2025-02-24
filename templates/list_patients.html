@@ -2,12 +2,12 @@
 
 
 {% block content %}
-<h2>List of Patients</h2>
-<p>This is where you would display the list of patients.</p>
-<!-- Example of a static list; replace with dynamic content as needed -->
+<h2>List of Stroke Cases</h2>
 <ul>
-    <li>Patient 1</li>
-    <li>Patient 2</li>
-    <li>Patient 3</li>
+    {% for patient in patients %}
+        <li><a href="{{ url_for('patients.stroke_case', case_id=patient.id) }}">{{ patient.case_name }}</a></li>  <!-- Link to the case detail -->
+    {% else %}
+        <li>No stroke cases found.</li>
+    {% endfor %}
 </ul>
 {% endblock %}

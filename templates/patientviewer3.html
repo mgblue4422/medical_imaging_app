@@ -180,9 +180,11 @@
                 </div>
 
                 <!-- Segmentation Section -->
+                <!-- Segmentation Section -->
                 <div id="Segmentation" class="feature-content">
+
                     <h3>Segmentation</h3>
-                    <input type="file" id="segmentation-file-upload" multiple accept="image/*">
+                    <input type="file" id="segmentation-file-upload" multiple>
                     <div class="carousel-container">
                         <button class="nav-button" id="prev">&#10094;</button>
                         <div class="carousel" id="carousel"></div>
@@ -190,6 +192,7 @@
                     </div>
                     <div class="image-counter" id="image-counter">0/0</div>
                 </div>
+
 
                 <!-- Other Sections -->
                 <div id="patient-info" class="feature-content">
@@ -233,6 +236,7 @@
     </div>
 
     <script>
+
         // Existing script for sidebar and file upload handling
         window.onload = function() {
             document.getElementById('case-analysis').classList.add('active');
@@ -267,37 +271,67 @@
             displayImages();
         });
 
-        prevBtn.addEventListener('click', () => {
-            currentIndex = (currentIndex - 1 + images.length) % images.length;
-            displayImages();
-        });
 
-        nextBtn.addEventListener('click', () => {
-            currentIndex = (currentIndex + 1) % images.length;
-            displayImages();
-        });
+const caseNumber = {{ case.id }};
+        // Fetch slices from the backend
+async function fetchSlices() {
 
-        function displayImages() {
-            carousel.innerHTML = '';
-            imageCounter.textContent = `${currentIndex + 1}/${images.length}`;
+    const response = await fetch(`http://127.0.0.1:5000/patients/slices/${caseNumber}`);
+    if (!response.ok) {
+        console.error('Failed to fetch slices:', response.statusText);
+        return [];
+    }
+    const data = await response.json();
+    console.log('Fetched slices:', data.slices); // Log the fetched slices
+    return data.slices;
+}
 
-            for (let i = 0; i < 4; i++) {
-                const index = (currentIndex + i) % images.length;
-                const imgContainer = document.createElement('div');
-                const img = document.createElement('img');
-                const label = document.createElement('div');
 
-                img.src = URL.createObjectURL(images[index]);
-                label.textContent = `Image ${index + 1}`;
-                label.classList.add('image-label');
 
-                if (i === 1) img.classList.add('center');
+async function initializeCarousel() {
+    images = await fetchSlices();
+    currentIndex = 0;
+    displayImages();
+}
 
-                imgContainer.appendChild(img);
-                imgContainer.appendChild(label);
-                carousel.appendChild(imgContainer);
-            }
-        }
+document.addEventListener('DOMContentLoaded', initializeCarousel);
+console.log('DOM fully loaded and parsed');
+
+prevBtn.addEventListener('click', () => {
+    currentIndex = (currentIndex - 1 + images.length) % images.length;
+    displayImages();
+});
+
+nextBtn.addEventListener('click', () => {
+    currentIndex = (currentIndex + 1) % images.length;
+    displayImages();
+});
+
+function displayImages() {
+    carousel.innerHTML = '';
+    imageCounter.textContent = `${currentIndex + 1}/${images.length}`;
+
+    for (let i = 0; i < 4; i++) {
+        const index = (currentIndex + i) % images.length;
+        const imgContainer = document.createElement('div');
+        const img = document.createElement('img');
+        const label = document.createElement('div');
+
+        img.src = `http://127.0.0.1:5000/${images[index]}`;;
+        console.log('Displaying image:', img.src); // Log the image source
+        label.textContent = `Image ${index + 1}`;
+        label.classList.add('image-label');
+
+        if (i === 1) img.classList.add('center');
+
+        imgContainer.appendChild(img);
+        imgContainer.appendChild(label);
+        carousel.appendChild(imgContainer);
+    }
+}
+
+
+
     </script>
 </body>
 </html>

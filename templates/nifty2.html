@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NIfTI to GIF</title>
+</head>
+<body>
+    <h1>NIfTI to GIF Converter</h1>
+    <form action="/gif" method="get">
+        <button type="submit">Create GIF</button>
+    </form>
+    <div>
+        <h2>Generated GIF:</h2>
+        <img id="gif" src="" alt="Generated GIF will appear here" style="display:none;">
+    </div>
+    <script>
+        document.querySelector('form').onsubmit = function() {
+            const gifImage = document.getElementById('gif');
+            gifImage.src = '/static/slices_animation.gif';
+            gifImage.style.display = 'block';
+        };
+    </script>
+</body>
+</html>
