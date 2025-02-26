@@ -31,6 +31,11 @@
             height: 32px;
             filter: invert(100%);
         }
+        .toolbar select {
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
         .upload-container {
             background-color: white;
             padding: 20px;
@@ -87,6 +92,13 @@
         <button id="pan"><img src="/static/images/img_3.png" alt="Pan"></button>
         <button id="window-level"><img src="/static/images/img_4.png" alt="Window Level"></button>
         <button id="measure"><img src="/static/images/img_5.png" alt="Mål"></button>
+
+        <!-- Dropdown for measurement options -->
+        <select id="measurement-options">
+            <option value="length">Length</option>
+            <option value="bidirectional">Bidirectional</option>
+            <option value="annotation">Annotation</option>
+        </select>
     </div>
 
     <div class="upload-container">
@@ -136,140 +148,4 @@
         const DPI = 96; // Assuming a DPI of 96 for the images
         const MM_PER_INCH = 25.4;
 
-        const setupImageTools = (imgElement, canvasElement) => {
-            let scale = 1;
-            let rotation = 0;
-
-            const applyTransform = () => {
-                imgElement.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale}) rotate(${rotation}deg)`;
-                canvasElement.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale}) rotate(${rotation}deg)`;
-            };
-
-            document.getElementById("zoom-in").addEventListener("click", () => {
-                scale += 0.1;
-                applyTransform();
-            });
-
-            document.getElementById("zoom-out").addEventListener("click", () => {
-                scale = Math.max(scale - 0.1, 0.5);
-                applyTransform();
-            });
-
-            document.getElementById("rotate").addEventListener("click", () => {
-                rotation += 90;
-                applyTransform();
-            });
-
-            document.getElementById("window-level").addEventListener("click", () => {
-                imgElement.style.filter = imgElement.style.filter === "brightness(1.5)" ? "brightness(1)" : "brightness(1.5)";
-            });
-
-            imgElement.addEventListener("mousedown", (e) => {
-                if (isPanning) {
-                    isDragging = true;
-                    startX = e.clientX - currentX;
-                    startY = e.clientY - currentY;
-                    imgElement.style.cursor = "grabbing";
-                    e.preventDefault();
-                }
-            });
-
-            document.addEventListener("mousemove", (e) => {
-                if (isPanning && isDragging) {
-                    currentX = e.clientX - startX;
-                    currentY = e.clientY - startY;
-                    applyTransform();
-                    e.preventDefault();
-                }
-            });
-
-            document.addEventListener("mouseup", () => {
-                if (isPanning) {
-                    isDragging = false;
-                    imgElement.style.cursor = "grab";
-                }
-            });
-
-            document.getElementById("pan").addEventListener("click", () => {
-                isPanning = !isPanning;
-                imgElement.style.cursor = isPanning ? "grab" : "default";
-            });
-
-            imgElement.addEventListener("click", (e) => {
-                if (isMeasuring) {
-                    const rect = imgElement.getBoundingClientRect();
-                    const x = (e.clientX - rect.left) / scale; // Adjust for scale
-                    const y = (e.clientY - rect.top) / scale; // Adjust for scale
-                    points.push({ x, y });
-
-                    if (points.length === 2) {
-                        const distance = calculateDistance(points[0], points[1]);
-                        const distanceInMM = (distance / DPI) * MM_PER_INCH; // Convert pixels to mm
-                        alert(`Avstand: ${distanceInMM.toFixed(2)} mm`);
-
-                        // Draw line on canvas
-                        const ctx = canvasElement.getContext('2d');
-                        ctx.clearRect(0, 0, canvasElement.width, canvasElement.height); // Clear previous drawings
-                        ctx.beginPath();
-                        ctx.moveTo(points[0].x * scale, points[0].y * scale); // Adjust for scale
-                        ctx.lineTo(points[1].x * scale, points[1].y * scale); // Adjust for scale
-                        ctx.strokeStyle = 'red';
-                        ctx.lineWidth = 2;
-                        ctx.stroke();
-
-                        // Draw distance label
-                        const midX = (points[0].x + points[1].x) * scale / 2;
-                        const midY = (points[0].y + points[1].y) * scale / 2;
-                        ctx.fillStyle = 'red';
-                        ctx.font = '16px Arial';
-                        ctx.fillText(`${distanceInMM.toFixed(2)} mm`, midX, midY - 5); // Draw the distance above the line
-
-                        points = []; // Reset points after measurement
-                    }
-                }
-            });
-        };
-
-        const calculateDistance = (point1, point2) => {
-            const dx = point2.x - point1.x;
-            const dy = point2.y - point1.y;
-            return Math.sqrt(dx * dx + dy * dy); // Return distance in pixels
-        };
-
-        document.getElementById("measure").addEventListener("click", () => {
-            isMeasuring = !isMeasuring;
-            document.getElementById("measure").style.backgroundColor = isMeasuring ? "#ccc" : "transparent";
-        });
-
-        document.getElementById("image-upload-1").addEventListener("change", (e) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const imgElement = document.getElementById("image-1");
-                const canvasElement = document.getElementById("canvas-1");
-                imgElement.src = e.target.result;
-                imgElement.onload = () => {
-                    canvasElement.width = imgElement.width; // Set canvas width
-                    canvasElement.height = imgElement.height; // Set canvas height
-                    setupImageTools(imgElement, canvasElement);
-                };
-            };
-            reader.readAsDataURL(e.target.files[0]);
-        });
-
-        document.getElementById("image-upload-2").addEventListener("change", (e) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const imgElement = document.getElementById("image-2");
-                const canvasElement = document.getElementById("canvas-2");
-                imgElement.src = e.target.result;
-                imgElement.onload = () => {
-                    canvasElement.width = imgElement.width; // Set canvas width
-                    canvasElement.height = imgElement.height; // Set canvas height
-                    setupImageTools(imgElement, canvasElement);
-                };
-            };
-            reader.readAsDataURL(e.target.files[0]);
-        });
-    </script>
-</body>
-</html>
+        const setupImageTools =

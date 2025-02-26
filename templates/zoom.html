@@ -61,6 +61,12 @@
             user-select: none;
             -webkit-user-drag: none;
         }
+        .canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none; /* Prevent interaction with the canvas */
+        }
         .analysis-results {
             margin-top: 40px;
             padding: 20px;
@@ -80,6 +86,7 @@
         <button id="rotate"><img src="/static/images/img_2.png" alt="Roter"></button>
         <button id="pan"><img src="/static/images/img_3.png" alt="Pan"></button>
         <button id="window-level"><img src="/static/images/img_4.png" alt="Window Level"></button>
+        <button id="measure"><img src="/static/images/img_5.png" alt="Mål"></button>
     </div>
 
     <div class="upload-container">
@@ -99,10 +106,12 @@
     <div class="image-preview-container">
         <div class="image-container" id="image-container-1">
             <h3>Bilde 1</h3>
+            <canvas id="canvas-1" class="canvas"></canvas>
             <img id="image-1" alt="Forhåndsvisning bilde 1">
         </div>
         <div class="image-container" id="image-container-2">
             <h3>Bilde 2</h3>
+            <canvas id="canvas-2" class="canvas"></canvas>
             <img id="image-2" alt="Forhåndsvisning bilde 2">
         </div>
     </div>
@@ -122,13 +131,18 @@
         let isDragging = false;
         let startX = 0, startY = 0;
         let currentX = 0, currentY = 0;
+        let isMeasuring = false;
+        let points = [];
+        const DPI = 96; // Assuming a DPI of 96 for the images
+        const MM_PER_INCH = 25.4;
 
-        const setupImageTools = (imgElement) => {
+        const setupImageTools = (imgElement, canvasElement) => {
             let scale = 1;
             let rotation = 0;
 
             const applyTransform = () => {
                 imgElement.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale}) rotate(${rotation}deg)`;
+                canvasElement.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale}) rotate(${rotation}deg)`;
             };
 
             document.getElementById("zoom-in").addEventListener("click", () => {
@@ -180,14 +194,64 @@
                 isPanning = !isPanning;
                 imgElement.style.cursor = isPanning ? "grab" : "default";
             });
+
+            imgElement.addEventListener("click", (e) => {
+                if (isMeasuring) {
+                    const rect = imgElement.getBoundingClientRect();
+                    const x = (e.clientX - rect.left) / scale; // Adjust for scale
+                    const y = (e.clientY - rect.top) / scale; // Adjust for scale
+                    points.push({ x, y });
+
+                    if (points.length === 2) {
+                        const distance = calculateDistance(points[0], points[1]);
+                        const distanceInMM = (distance / DPI) * MM_PER_INCH; // Convert pixels to mm
+                        alert(`Avstand: ${distanceInMM.toFixed(2)} mm`);
+
+                        // Draw line on canvas
+                        const ctx = canvasElement.getContext('2d');
+                        ctx.clearRect(0, 0, canvasElement.width, canvasElement.height); // Clear previous drawings
+                        ctx.beginPath();
+                        ctx.moveTo(points[0].x * scale, points[0].y * scale); // Adjust for scale
+                        ctx.lineTo(points[1].x * scale, points[1].y * scale); // Adjust for scale
+                        ctx.strokeStyle = 'red';
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+
+                        // Draw distance label
+                        const midX = (points[0].x + points[1].x) * scale / 2;
+                        const midY = (points[0].y + points[1].y) * scale / 2;
+                        ctx.fillStyle = 'red';
+                        ctx.font = '16px Arial';
+                        ctx.fillText(`${distanceInMM.toFixed(2)} mm`, midX, midY - 5); // Draw the distance above the line
+
+                        points = []; // Reset points after measurement
+                    }
+                }
+            });
         };
+
+        const calculateDistance = (point1, point2) => {
+            const dx = point2.x - point1.x;
+            const dy = point2.y - point1.y;
+            return Math.sqrt(dx * dx + dy * dy); // Return distance in pixels
+        };
+
+        document.getElementById("measure").addEventListener("click", () => {
+            isMeasuring = !isMeasuring;
+            document.getElementById("measure").style.backgroundColor = isMeasuring ? "#ccc" : "transparent";
+        });
 
         document.getElementById("image-upload-1").addEventListener("change", (e) => {
             const reader = new FileReader();
             reader.onload = (e) => {
                 const imgElement = document.getElementById("image-1");
+                const canvasElement = document.getElementById("canvas-1");
                 imgElement.src = e.target.result;
-                setupImageTools(imgElement);
+                imgElement.onload = () => {
+                    canvasElement.width = imgElement.width; // Set canvas width
+                    canvasElement.height = imgElement.height; // Set canvas height
+                    setupImageTools(imgElement, canvasElement);
+                };
             };
             reader.readAsDataURL(e.target.files[0]);
         });
@@ -196,8 +260,13 @@
             const reader = new FileReader();
             reader.onload = (e) => {
                 const imgElement = document.getElementById("image-2");
+                const canvasElement = document.getElementById("canvas-2");
                 imgElement.src = e.target.result;
-                setupImageTools(imgElement);
+                imgElement.onload = () => {
+                    canvasElement.width = imgElement.width; // Set canvas width
+                    canvasElement.height = imgElement.height; // Set canvas height
+                    setupImageTools(imgElement, canvasElement);
+                };
             };
             reader.readAsDataURL(e.target.files[0]);
         });

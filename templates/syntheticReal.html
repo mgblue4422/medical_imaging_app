@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Synthesization</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Fira Sans', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f9fc;
+            color: #333;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            align-items: center;
+        }
+        .header {
+            text-align: center;
+            padding: 1.5em;
+            background: #6db3f2;
+            color: white;
+            font-size: 1.8em;
+            border-bottom: 2px solid #5a9bd4;
+            width: 100%;
+        }
+        .content {
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            gap: 20px;
+            width: 80%;
+        }
+        .carousel-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .carousel-container {
+            margin: 20px auto;
+            position: relative;
+            width: 80%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .carousel {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            max-width: 100%;
+        }
+        .carousel img {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.3s, border 0.3s;
+        }
+        .carousel img.center {
+            transform: scale(1.5);
+            z-index: 1;
+        }
+        .carousel img.selected {
+            border: 4px solid #6db3f2;
+        }
+
+        /* Full-screen zoom */
+        .fullscreen-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .fullscreen-overlay img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .fullscreen-overlay.active {
+            display: flex;
+        }
+
+        .image-counter {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 1em;
+            color: #333;
+        }
+        .nav-buttons {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .nav-button {
+            background-color: #6db3f2;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.3s;
+            margin: 0 5px;
+        }
+        .nav-button:hover {
+            background-color: #5a9bd4;
+        }
+        .compare-button-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .compare-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .compare-container {
+            display: flex;
+            gap: 20px;
+        }
+        .compare-modal img {
+            width: 300px;
+            height: auto;
+            border-radius: 10px;
+            background: white;
+            padding: 10px;
+        }
+        .close-button {
+            background-color: red;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">Synthetic Analysis</div>
+        <div class="content">
+            <div class="carousel-section" id="real-section">
+                <h3>Segmentation - Real Data</h3>
+                <input type="file" class="file-upload" multiple accept="image/*">
+                <div class="carousel-container">
+                    <div class="carousel"></div>
+                </div>
+                <div class="image-counter">0/0</div>
+                <div class="nav-buttons">
+                    <button class="nav-button prev">&#10094;</button>
+                    <button class="nav-button next">&#10095;</button>
+                </div>
+            </div>
+            <div class="carousel-section" id="fake-section">
+                <h3>Segmentation - Fake Data</h3>
+                <input type="file" class="file-upload" multiple accept="image/*">
+                <div class="carousel-container">
+                    <div class="carousel"></div>
+                </div>
+                <div class="image-counter">0/0</div>
+                <div class="nav-buttons">
+                    <button class="nav-button prev">&#10094;</button>
+                    <button class="nav-button next">&#10095;</button>
+                </div>
+            </div>
+        </div>
+        <div class="compare-button-container">
+            <button id="compare-button" class="nav-button">Compare Selected</button>
+        </div>
+    </div>
+
+    <div class="fullscreen-overlay" id="fullscreen-overlay">
+        <img id="fullscreen-image" src="" alt="Zoomed Image">
+    </div>
+
+    <div class="compare-modal" id="compare-modal">
+        <div class="compare-container">
+            <img id="real-image" src="" alt="Real Data">
+            <img id="fake-image" src="" alt="Fake Data">
+        </div>
+        <button id="close-compare" class="nav-button close-button">Close</button>
+    </div>
+
+    <script>
+        let selectedRealImage = null;
+        let selectedFakeImage = null;
+
+        document.querySelectorAll('.carousel-section').forEach(section => {
+            const fileUpload = section.querySelector('.file-upload');
+            const carousel = section.querySelector('.carousel');
+            const prevBtn = section.querySelector('.prev');
+            const nextBtn = section.querySelector('.next');
+            const imageCounter = section.querySelector('.image-counter');
+            const type = section.id.includes('real') ? 'real' : 'fake';
+
+            let images = [];
+            let currentIndex = 0;
+
+            fileUpload.addEventListener('change', (event) => {
+                images = Array.from(event.target.files);
+                currentIndex = 0;
+                displayImages();
+            });
+
+            prevBtn.addEventListener('click', () => {
+                if (images.length > 0) {
+                    currentIndex = (currentIndex - 1 + images.length) % images.length;
+                    displayImages();
+                }
+            });
+
+            nextBtn.addEventListener('click', () => {
+                if (images.length > 0) {
+                    currentIndex = (currentIndex + 1) % images.length;
+                    displayImages();
+                }
+            });
+
+            function displayImages() {
+                carousel.innerHTML = '';
+                imageCounter.textContent = `${currentIndex + 1}/${images.length}`;
+
+                images.forEach((file, index) => {
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(file);
+                    if (index === currentIndex) img.classList.add('center');
+
+                    img.addEventListener('click', () => {
+                        document.querySelectorAll(`#${section.id} img`).forEach(img => img.classList.remove('selected'));
+                        img.classList.add('selected');
+
+                        if (type === 'real') {
+                            selectedRealImage = img.src;
+                        } else {
+                            selectedFakeImage = img.src;
+                        }
+                    });
+
+                    // Add zoom functionality on double click to full-screen overlay
+                    img.addEventListener('dblclick', () => {
+                        const overlay = document.getElementById('fullscreen-overlay');
+                        const fullscreenImg = document.getElementById('fullscreen-image');
+                        fullscreenImg.src = img.src;
+                        overlay.classList.add('active');
+
+                        // Close full-screen zoom when clicked
+                        overlay.addEventListener('click', () => {
+                            overlay.classList.remove('active');
+                        });
+                    });
+
+                    carousel.appendChild(img);
+                });
+            }
+        });
+
+        document.getElementById('compare-button').addEventListener('click', () => {
+            if (selectedRealImage && selectedFakeImage) {
+                document.getElementById('real-image').src = selectedRealImage;
+                document.getElementById('fake-image').src = selectedFakeImage;
+                document.getElementById('compare-modal').style.display = 'flex';
+            } else {
+                alert('Please select one image from Real Data and one from Fake Data.');
+            }
+        });
+
+        document.getElementById('close-compare').addEventListener('click', () => {
+            document.getElementById('compare-modal').style.display = 'none';
+        });
+    </script>
+</body>
+</html>
