@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medisinsk Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            background: #f0f4f8;
+        }
+
+        .sidebar {
+            width: 300px;
+            background: linear-gradient(135deg, #007bff, #00c6ff);
+            color: #fff;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar h2 {
+            font-size: 24px;
+        }
+
+        .sidebar a {
+            text-decoration: none;
+            color: #fff;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: flex-start;
+        }
+
+        .card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 900px;
+        }
+
+        .card h3 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>Medisinsk Dashboard</h2>
+        <a href="#">Pasientjournaler</a>
+        <a href="#">Medisinoversikt</a>
+        <a href="#">Avtaler</a>
+        <a href="#">Laboratorieresultater</a>
+        <a href="#">Innstillinger</a>
+    </div>
+    <div class="content">
+        <h2>Welcome to the User Guide</h2>
+        <p>Explore the key features of the medical interface.</p>
+
+        <h3>🏠 Home</h3>
+        <p>Access an overview of all functionalities.</p>
+
+        <h3>👩‍⚕️ Patient</h3>
+        <ul>
+            <li><strong>View patient list:</strong> Browse patient records.</li>
+            <li><strong>Upload new patient:</strong> Register a new patient.</li>
+            <li><strong>Search for patient:</strong> Find specific patients instantly.</li>
+        </ul>
+
+        <h3>📊 Data Synthesization</h3>
+        <p>Analyze and compare real and synthetic images.</p>
+        <ul>
+            <li>Double-click an image to zoom in.</li>
+            <li>Select one real and one synthetic image, then press <strong>Compare</strong> to view them side by side.</li>
+        </ul>
+    </div>
+</body>
+</html>

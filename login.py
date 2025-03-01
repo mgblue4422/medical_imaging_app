@@ -12,7 +12,7 @@ from db1 import db1
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/g/PycharmProjects/medical_imaging_app/database.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://///Users/ashvini12/PycharmProjects/medical_imaging_app/database.db'
 app.config['SECRET_KEY'] = 'your_secret_key'
 db1.init_app(app)  # Initialize the first db1 instance with the app
 bcrypt = Bcrypt(app)

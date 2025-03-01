@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Guide</title>
+    <style>
+        body {
+            font-family: "Inter", sans-serif;
+            background-color: #f0f8ff;
+            padding: 20px;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .content {
+            max-width: 800px;
+            background: linear-gradient(135deg, #80caff, #5fa6d1);
+            color: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            position: relative;
+        }
+        h2, h3 {
+            font-weight: 700;
+        }
+        h2 {
+            font-size: 30px;
+            margin-bottom: 20px;
+        }
+        h3 {
+            font-size: 22px;
+            margin-top: 20px;
+        }
+        p, li {
+            font-size: 18px;
+            line-height: 1.6;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+            text-align: left;
+        }
+        li::before {
+            content: "\2713";
+            color: #ffdd57;
+            font-weight: bold;
+            display: inline-block;
+            width: 1.5em;
+        }
+        .faq {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid rgba(255, 255, 255, 0.5);
+        }
+        .step-container {
+            display: none;
+        }
+        .step-container.active {
+            display: block;
+        }
+        .btn {
+            background-color: #ffdd57;
+            color: #333;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+            margin-top: 20px;
+        }
+        .btn:hover {
+            background-color: #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <h2>Interactive User Guide</h2>
+        <div class="step-container active" id="step-1">
+            <h3>🏠 Home</h3>
+            <p>Access an overview of all functionalities.</p>
+            <button class="btn" onclick="nextStep(1)">Next</button>
+        </div>
+
+        <div class="step-container" id="step-2">
+            <h3>👩‍⚕️ Patient</h3>
+            <ul>
+                <li><strong>View patient list:</strong> Browse patient records.</li>
+                <li><strong>Upload new patient:</strong> Register a new patient.</li>
+                <li><strong>Search for patient:</strong> Find specific patients instantly.</li>
+            </ul>
+            <button class="btn" onclick="nextStep(2)">Next</button>
+        </div>
+
+        <div class="step-container" id="step-3">
+            <h3>📊 Data Synthesization</h3>
+            <p>Analyze and compare real and synthetic images.</p>
+            <ul>
+                <li>Double-click an image to zoom in.</li>
+                <li>Select one real and one synthetic image, then press <strong>Compare</strong> to view them side by side.</li>
+            </ul>
+            <button class="btn" onclick="nextStep(3)">Next</button>
+        </div>
+
+        <div class="step-container" id="step-4">
+            <h2>Frequently Asked Questions</h2>
+            <ul>
+                <li><strong>How do I log in?</strong> Click on the 'Login' button in the navigation bar and enter your credentials.</li>
+                <li><strong>What if I forget my password?</strong> Click 'Forgot Password' on the login page to reset it.</li>
+                <li><strong>Who can access patient data?</strong> Only authorized medical professionals with an account.</li>
+            </ul>
+            <button class="btn" onclick="restartGuide()">Restart Guide</button>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        function nextStep(step) {
+            document.getElementById(`step-${step}`).classList.remove('active');
+            document.getElementById(`step-${step + 1}`).classList.add('active');
+            currentStep++;
+        }
+
+        function restartGuide() {
+            document.getElementById(`step-${currentStep}`).classList.remove('active');
+            document.getElementById('step-1').classList.add('active');
+            currentStep = 1;
+        }
+    </script>
+</body>
+</html>
