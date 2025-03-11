@@ -1,47 +1,29 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="no">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hjerneslag Bildeanalyse</title>
+    <title>Regional Bildeanalyse</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #eefaff;
             padding: 20px;
         }
-        .toolbar {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-            background-color: #1c3b57;
-            padding: 10px 0;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            margin-bottom: 20px;
-        }
-        .toolbar button {
-            background: none;
-            border: none;
-            cursor: pointer;
-        }
-        .toolbar button img {
-            width: 32px;
-            height: 32px;
-            filter: invert(100%);
-        }
-        .toolbar select {
-            padding: 5px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
-        .upload-container {
-            background-color: white;
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: white;
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
+            text-align: center;
+        }
+        h2 {
+            font-size: 28px;
+            font-weight: bold;
+            text-align: center;
+            color: #3a8ec3;
         }
         .image-preview-container {
             display: flex;
@@ -49,103 +31,81 @@
             gap: 20px;
         }
         .image-container {
-            position: relative;
             width: 45%;
-            background-color: white;
-            padding: 10px;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
+            text-align: center;
+            position: relative;
         }
         .image-container img {
             width: 100%;
-            max-height: 500px;
-            transition: transform 0.1s ease;
-            cursor: grab;
-            position: relative;
-            user-select: none;
-            -webkit-user-drag: none;
-        }
-        .canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            pointer-events: none; /* Prevent interaction with the canvas */
-        }
-        .analysis-results {
-            margin-top: 40px;
-            padding: 20px;
-            background-color: white;
+            max-height: 400px;
             border-radius: 10px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            cursor: pointer;
         }
-        .analysis-results h3 {
-            color: #3a8ec3;
+        .analysis-results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="toolbar">
-        <button id="zoom-in"><img src="/static/images/img9.png" alt="Zoom inn"></button>
-        <button id="zoom-out"><img src="/static/images/img_1.png" alt="Zoom ut"></button>
-        <button id="rotate"><img src="/static/images/img_2.png" alt="Roter"></button>
-        <button id="pan"><img src="/static/images/img_3.png" alt="Pan"></button>
-        <button id="window-level"><img src="/static/images/img_4.png" alt="Window Level"></button>
-        <button id="measure"><img src="/static/images/img_5.png" alt="Mål"></button>
-
-        <!-- Dropdown for measurement options -->
-        <select id="measurement-options">
-            <option value="length">Length</option>
-            <option value="bidirectional">Bidirectional</option>
-            <option value="annotation">Annotation</option>
-        </select>
-    </div>
-
-    <div class="upload-container">
-        <h2>Last opp CTP eller MRI-bilder</h2>
+    <div class="container">
+        <h2>Compare parameters</h2>
+        <p>Last opp og sammenlign to bilder for analyse.</p>
         <form id="upload-form" enctype="multipart/form-data">
-            <div>
-                <label for="image-upload-1">Velg bilde 1 (CTP eller MRI):</label>
-                <input type="file" id="image-upload-1" name="image1" accept="image/*" required>
-            </div>
-            <div>
-                <label for="image-upload-2">Velg bilde 2 (CTP eller MRI):</label>
-                <input type="file" id="image-upload-2" name="image2" accept="image/*" required>
-            </div>
+            <label for="image-upload-1">Velg bilde 1:</label>
+            <input type="file" id="image-upload-1" accept="image/*"><br><br>
+            <label for="image-upload-2">Velg bilde 2:</label>
+            <input type="file" id="image-upload-2" accept="image/*"><br><br>
         </form>
-    </div>
-
-    <div class="image-preview-container">
-        <div class="image-container" id="image-container-1">
-            <h3>Bilde 1</h3>
-            <canvas id="canvas-1" class="canvas"></canvas>
-            <img id="image-1" alt="Forhåndsvisning bilde 1">
+        <div class="image-preview-container">
+            <div class="image-container">
+                <h3>Bilde 1</h3>
+                <img id="image-1" alt="Forhåndsvisning" style="display:none;">
+            </div>
+            <div class="image-container">
+                <h3>Bilde 2</h3>
+                <img id="image-2" alt="Forhåndsvisning" style="display:none;">
+            </div>
         </div>
-        <div class="image-container" id="image-container-2">
-            <h3>Bilde 2</h3>
-            <canvas id="canvas-2" class="canvas"></canvas>
-            <img id="image-2" alt="Forhåndsvisning bilde 2">
+        <div class="analysis-results" id="analysis-results" style="display:none;">
+            <h3>Analyse Resultater</h3>
+            <p>Her er analysen av de opplastede bildene.</p>
         </div>
     </div>
-
-    <div class="analysis-results" id="analysis-results" style="display:none;">
-        <h3>Analyse Resultater</h3>
-        <p>Bildene er analysert. Her er resultatene:</p>
-        <ul>
-            <li><strong>Iskemisk skade:</strong> 45% av hjernen er påvirket.</li>
-            <li><strong>Blodstrøm:</strong> Redusert perfusjon i venstre hjernehalvdel.</li>
-            <li><strong>Anbefaling:</strong> Umiddelbar behandling med trombolyse.</li>
-        </ul>
-    </div>
-
     <script>
-        let isPanning = false;
-        let isDragging = false;
-        let startX = 0, startY = 0;
-        let currentX = 0, currentY = 0;
-        let isMeasuring = false;
-        let points = [];
-        const DPI = 96; // Assuming a DPI of 96 for the images
-        const MM_PER_INCH = 25.4;
+        document.getElementById("image-upload-1").addEventListener("change", function(event) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById("image-1");
+                img.src = e.target.result;
+                img.style.display = "block";
+            };
+            reader.readAsDataURL(event.target.files[0]);
+        });
 
-        const setupImageTools =
+        document.getElementById("image-upload-2").addEventListener("change", function(event) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById("image-2");
+                img.src = e.target.result;
+                img.style.display = "block";
+            };
+            reader.readAsDataURL(event.target.files[0]);
+        });
+
+        document.querySelectorAll(".image-container img").forEach(img => {
+            img.addEventListener("dblclick", function() {
+                if (this.style.transform === "scale(2)") {
+                    this.style.transform = "scale(1)";
+                } else {
+                    this.style.transform = "scale(2)";
+                }
+            });
+        });
+    </script>
+</body>
+</html>

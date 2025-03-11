@@ -1,13 +1,90 @@
-<!-- list_patients.html -->
-
-
 {% block content %}
-<h2>List of Stroke Cases</h2>
-<ul>
-    {% for patient in patients %}
-        <li><a href="{{ url_for('patients.stroke_case', case_id=patient.id) }}">{{ patient.case_name }}</a></li>  <!-- Link to the case detail -->
-    {% else %}
-        <li>No stroke cases found.</li>
-    {% endfor %}
-</ul>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stroke Cases</title>
+    <style>
+        /* General page layout and design */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff; /* Light blue background */
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #80d0f7; /* Light blue header */
+            color: #333;
+            text-align: center;
+            padding: 20px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        header .icon {
+            margin-right: 15px;
+            font-size: 2em;
+        }
+
+        /* Content styles */
+        h2 {
+            text-align: center;
+            color: #008cba; /* Slightly darker blue for contrast */
+            padding: 20px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 20px;
+        }
+        li {
+            padding: 12px;
+            background-color: #ffffff; /* White background for each item */
+            border: 1px solid #d1e8ff; /* Soft border for a light, calming look */
+            border-radius: 5px;
+            margin: 8px 0;
+            transition: background-color 0.3s ease;
+        }
+        li:hover {
+            background-color: #e0f7ff; /* Light blue hover effect */
+            cursor: pointer;
+        }
+        a {
+            color: #0077cc; /* Calming blue for links */
+            text-decoration: none;
+            font-weight: bold;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* Medical icon styles */
+        .icon {
+            font-family: "Font Awesome 5 Free";
+            font-weight: 900;
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+        <div class="icon">&#xf0f9;</div> <!-- Hospital icon from FontAwesome -->
+        <span>Stroke Cases Overview</span>
+    </header>
+
+    <h2>List of Stroke Cases</h2>
+    <ul>
+        {% for patient in patients %}
+            <li><a href="{{ url_for('patients.stroke_case', case_id=patient.id) }}">{{ patient.case_name }}</a></li>  <!-- Link to the case detail -->
+        {% else %}
+            <li>No stroke cases found.</li>
+        {% endfor %}
+    </ul>
+
+</body>
+</html>
 {% endblock %}

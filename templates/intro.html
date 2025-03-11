@@ -65,7 +65,8 @@
             position: absolute;
             top: 0;
             left: 0;
-            pointer-events: none; /* Prevent interaction with the canvas */
+            pointer-events: auto;
+            z-index: 1; /* Ensures canvas is above the image */
         }
         .analysis-results {
             margin-top: 40px;
@@ -87,6 +88,8 @@
         <button id="pan"><img src="/static/images/img_3.png" alt="Pan"></button>
         <button id="window-level"><img src="/static/images/img_4.png" alt="Window Level"></button>
         <button id="measure"><img src="/static/images/img_5.png" alt="Mål"></button>
+        <button id="pen-tool"><img src="/static/images/img_6.png" alt="Pen Tool"></button>
+        <button id="clear-drawing"><img src="/static/images/img_7.png" alt="Slett tegning"></button> <!-- Eraser button to clear drawing -->
     </div>
 
     <div class="upload-container">
@@ -127,121 +130,139 @@
     </div>
 
     <script>
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
         let isPanning = false;
-        let isDragging = false;
-        let startX = 0, startY = 0;
-        let currentX = 0, currentY = 0;
-        let isMeasuring = false;
-        let points = [];
-        const DPI = 96; // Assuming a DPI of 96 for the images
-        const MM_PER_INCH = 25.4;
+        let startX = 0, startY = 0, currentX = 0, currentY = 0;
+        let scale = 1;
+        let rotation = 0;
 
+        // Function to apply transformations to the image and canvas
+        const applyTransform = (imgElement, canvasElement) => {
+            imgElement.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale}) rotate(${rotation}deg)`;
+            canvasElement.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale}) rotate(${rotation}deg)`;
+        };
+
+        // Set up image manipulation tools
         const setupImageTools = (imgElement, canvasElement) => {
-            let scale = 1;
-            let rotation = 0;
-
-            const applyTransform = () => {
-                imgElement.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale}) rotate(${rotation}deg)`;
-                canvasElement.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale}) rotate(${rotation}deg)`;
-            };
-
+            // Zoom In
             document.getElementById("zoom-in").addEventListener("click", () => {
                 scale += 0.1;
-                applyTransform();
+                applyTransform(imgElement, canvasElement);
             });
 
+            // Zoom Out
             document.getElementById("zoom-out").addEventListener("click", () => {
                 scale = Math.max(scale - 0.1, 0.5);
-                applyTransform();
+                applyTransform(imgElement, canvasElement);
             });
 
+            // Rotate Image
             document.getElementById("rotate").addEventListener("click", () => {
                 rotation += 90;
-                applyTransform();
+                applyTransform(imgElement, canvasElement);
             });
 
-            document.getElementById("window-level").addEventListener("click", () => {
-                imgElement.style.filter = imgElement.style.filter === "brightness(1.5)" ? "brightness(1)" : "brightness(1.5)";
-            });
-
-            // Panning behavior
+            // Pan Image
             imgElement.addEventListener("mousedown", (e) => {
                 if (isPanning) {
-                    isDragging = true;
                     startX = e.clientX - currentX;
                     startY = e.clientY - currentY;
+                    isDrawing = true;
                     imgElement.style.cursor = "grabbing";
                     e.preventDefault();
                 }
             });
 
             document.addEventListener("mousemove", (e) => {
-                if (isPanning && isDragging) {
+                if (isPanning && isDrawing) {
                     currentX = e.clientX - startX;
                     currentY = e.clientY - startY;
-                    applyTransform();
+                    applyTransform(imgElement, canvasElement);
                     e.preventDefault();
                 }
             });
 
             document.addEventListener("mouseup", () => {
                 if (isPanning) {
-                    isDragging = false;
+                    isDrawing = false;
                     imgElement.style.cursor = "grab";
                 }
             });
 
+            // Pan Toggle
             document.getElementById("pan").addEventListener("click", () => {
                 isPanning = !isPanning;
                 imgElement.style.cursor = isPanning ? "grab" : "default";
             });
 
-            imgElement.addEventListener("click", (e) => {
-                if (isMeasuring) {
-                    const rect = imgElement.getBoundingClientRect();
-                    const x = (e.clientX - rect.left) / scale; // Adjust for scale
-                    const y = (e.clientY - rect.top) / scale; // Adjust for scale
-                    points.push({ x, y });
-
-                    if (points.length === 2) {
-                        const distance = calculateDistance(points[0], points[1]);
-                        const distanceInMM = (distance / DPI) * MM_PER_INCH; // Convert pixels to mm
-                        alert(`Avstand: ${distanceInMM.toFixed(2)} mm`);
-
-                        // Draw line on canvas
-                        const ctx = canvasElement.getContext('2d');
-                        ctx.clearRect(0, 0, canvasElement.width, canvasElement.height); // Clear previous drawings
-                        ctx.beginPath();
-                        ctx.moveTo(points[0].x * scale, points[0].y * scale); // Adjust for scale
-                        ctx.lineTo(points[1].x * scale, points[1].y * scale); // Adjust for scale
-                        ctx.strokeStyle = 'red';
-                        ctx.lineWidth = 2;
-                        ctx.stroke();
-
-                        // Draw distance label
-                        const midX = (points[0].x + points[1].x) * scale / 2;
-                        const midY = (points[0].y + points[1].y) * scale / 2;
-                        ctx.fillStyle = 'red';
-                        ctx.font = '16px Arial';
-                        ctx.fillText(`${distanceInMM.toFixed(2)} mm`, midX, midY - 5); // Draw the distance above the line
-
-                        points = []; // Reset points after measurement
-                    }
-                }
+            // Window Level (brightness adjustment)
+            document.getElementById("window-level").addEventListener("click", () => {
+                imgElement.style.filter = imgElement.style.filter === "brightness(1.5)" ? "brightness(1)" : "brightness(1.5)";
             });
         };
 
-        const calculateDistance = (point1, point2) => {
-            const dx = point2.x - point1.x;
-            const dy = point2.y - point1.y;
-            return Math.sqrt(dx * dx + dy * dy); // Return distance in pixels
+        // Function to start drawing on canvas
+        const startDrawing = (e, canvasElement) => {
+            isDrawing = true;
+            lastX = e.offsetX;
+            lastY = e.offsetY;
         };
 
-        document.getElementById("measure").addEventListener("click", () => {
-            isMeasuring = !isMeasuring;
-            document.getElementById("measure").style.backgroundColor = isMeasuring ? "#ccc" : "transparent";
+        // Function to draw on canvas
+        const draw = (e, canvasElement) => {
+            if (!isDrawing) return;
+            const ctx = canvasElement.getContext("2d");
+            ctx.strokeStyle = "#FF0000";  // Red color for drawing
+            ctx.lineWidth = 2;
+            ctx.lineJoin = "round";
+            ctx.lineCap = "round";
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.stroke();
+            lastX = e.offsetX;
+            lastY = e.offsetY;
+        };
+
+        // Function to stop drawing
+        const stopDrawing = () => {
+            isDrawing = false;
+        };
+
+        // Function to clear the drawing on the canvas
+        const clearDrawing = () => {
+            const canvasElements = document.querySelectorAll(".canvas");
+            canvasElements.forEach((canvas) => {
+                const ctx = canvas.getContext("2d");
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            });
+        };
+
+        // Activate Pen Tool for drawing
+        document.getElementById("pen-tool").addEventListener("click", () => {
+            const imgElement1 = document.getElementById("image-1");
+            const canvasElement1 = document.getElementById("canvas-1");
+            const imgElement2 = document.getElementById("image-2");
+            const canvasElement2 = document.getElementById("canvas-2");
+
+            // Enable or disable pen tool drawing on both canvases
+            canvasElement1.addEventListener("mousedown", (e) => startDrawing(e, canvasElement1));
+            canvasElement1.addEventListener("mousemove", (e) => draw(e, canvasElement1));
+            canvasElement1.addEventListener("mouseup", stopDrawing);
+            canvasElement1.addEventListener("mouseout", stopDrawing);
+
+            canvasElement2.addEventListener("mousedown", (e) => startDrawing(e, canvasElement2));
+            canvasElement2.addEventListener("mousemove", (e) => draw(e, canvasElement2));
+            canvasElement2.addEventListener("mouseup", stopDrawing);
+            canvasElement2.addEventListener("mouseout", stopDrawing);
         });
 
+        // Clear Drawing on Button Click
+        document.getElementById("clear-drawing").addEventListener("click", clearDrawing);
+
+        // Image Upload and Rendering
         document.getElementById("image-upload-1").addEventListener("change", (e) => {
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -249,8 +270,8 @@
                 const canvasElement = document.getElementById("canvas-1");
                 imgElement.src = e.target.result;
                 imgElement.onload = () => {
-                    canvasElement.width = imgElement.width; // Set canvas width
-                    canvasElement.height = imgElement.height; // Set canvas height
+                    canvasElement.width = imgElement.width;
+                    canvasElement.height = imgElement.height;
                     setupImageTools(imgElement, canvasElement);
                 };
             };
@@ -264,8 +285,8 @@
                 const canvasElement = document.getElementById("canvas-2");
                 imgElement.src = e.target.result;
                 imgElement.onload = () => {
-                    canvasElement.width = imgElement.width; // Set canvas width
-                    canvasElement.height = imgElement.height; // Set canvas height
+                    canvasElement.width = imgElement.width;
+                    canvasElement.height = imgElement.height;
                     setupImageTools(imgElement, canvasElement);
                 };
             };

@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hjerneslag Bildeanalyse</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #eefaff;
+            padding: 20px;
+        }
+        .toolbar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            background-color: #1c3b57;
+            padding: 10px 0;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+        }
+        .toolbar button {
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        .toolbar button img {
+            width: 32px;
+            height: 32px;
+            filter: invert(100%);
+        }
+        .upload-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .image-preview-container {
+            display: flex;
+            justify-content: space-around;
+            gap: 20px;
+        }
+        .image-container {
+            position: relative;
+            width: 45%;
+            background-color: white;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .image-container img {
+            width: 100%;
+            max-height: 500px;
+            transition: transform 0.1s ease;
+            cursor: grab;
+            position: relative;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+        .canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: auto;
+            z-index: 1; /* Ensures canvas is above the image */
+        }
+        .analysis-results {
+            margin-top: 40px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .analysis-results h3 {
+            color: #3a8ec3;
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <button id="zoom-in"><img src="/static/images/img.png" alt="Zoom inn"></button>
+        <button id="zoom-out"><img src="/static/images/img_1.png" alt="Zoom ut"></button>
+        <button id="rotate"><img src="/static/images/img_2.png" alt="Roter"></button>
+        <button id="window-level"><img src="/static/images/img_4.png" alt="Window Level"></button>
+        <button id="measure"><img src="/static/images/img_5.png" alt="Mål"></button>
+        <button id="pen-tool"><img src="/static/images/img_6.png" alt="Pen Tool"></button>
+        <button id="clear-drawing"><img src="/static/images/img_7.png" alt="Slett tegning"></button> <!-- Eraser button to clear drawing -->
+        <button id="save-drawing"><img src="/static/images/img_8.png" alt="Lagre tegning"></button> <!-- Save drawing button -->
+    </div>
+
+    <div class="upload-container">
+        <h2>Last opp CTP eller MRI-bilder</h2>
+        <form id="upload-form" enctype="multipart/form-data">
+            <div>
+                <label for="image-upload-1">Velg bilde 1 (CTP eller MRI):</label>
+                <input type="file" id="image-upload-1" name="image1" accept="image/*" required>
+            </div>
+            <div>
+                <label for="image-upload-2">Velg bilde 2 (CTP eller MRI):</label>
+                <input type="file" id="image-upload-2" name="image2" accept="image/*" required>
+            </div>
+        </form>
+    </div>
+
+    <div class="image-preview-container">
+        <div class="image-container" id="image-container-1">
+            <h3>Bilde 1</h3>
+            <canvas id="canvas-1" class="canvas"></canvas>
+            <img id="image-1" alt="Forhåndsvisning bilde 1">
+        </div>
+        <div class="image-container" id="image-container-2">
+            <h3>Bilde 2</h3>
+            <canvas id="canvas-2" class="canvas"></canvas>
+            <img id="image-2" alt="Forhåndsvisning bilde 2">
+        </div>
+    </div>
+
+    <div class="analysis-results" id="analysis-results" style="display:none;">
+        <h3>Analyse Resultater</h3>
+        <p>Bildene er analysert. Her er resultatene:</p>
+        <ul>
+            <li><strong>Iskemisk skade:</strong> 45% av hjernen er påvirket.</li>
+            <li><strong>Blodstrøm:</strong> Redusert perfusjon i venstre hjernehalvdel.</li>
+            <li><strong>Anbefaling:</strong> Umiddelbar behandling med trombolyse.</li>
+        </ul>
+    </div>
+
+    <script>
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+        let isPanning = false;
+        let startX = 0, startY = 0, currentX = 0, currentY = 0;
+        let scale = 1;
+        let rotation = 0;
+        let lines = [];
+        let measurementPoints = [];
+        let measuring = false;
+        let startPoint = null;
+        let endPoint = null;
+        let isMeasuring = false;
+
+        // Function to apply transformations to the image and canvas
+        const applyTransform = (imgElement, canvasElement) => {
+            imgElement.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale}) rotate(${rotation}deg)`;
+            canvasElement.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale}) rotate(${rotation}deg)`;
+        };
+
+        // Set up image manipulation tools
+        const setupImageTools = (imgElement, canvasElement) => {
+            // Zoom In
+            document.getElementById("zoom-in").addEventListener("click", () => {
+                scale += 0.1;
+                applyTransform(imgElement, canvasElement);
+            });
+
+            // Zoom Out
+            document.getElementById("zoom-out").addEventListener("click", () => {
+                scale = Math.max(scale - 0.1, 0.5);
+                applyTransform(imgElement, canvasElement);
+            });
+
+            // Rotate Image
+            document.getElementById("rotate").addEventListener("click", () => {
+                rotation += 90;
+                applyTransform(imgElement, canvasElement);
+            });
+
+            // Pan Image
+            imgElement.addEventListener("mousedown", (e) => {
+                if (isPanning) {
+                    startX = e.clientX - currentX;
+                    startY = e.clientY - currentY;
+                    isDrawing = true;
+                    imgElement.style.cursor = "grabbing";
+                    e.preventDefault();
+                }
+            });
+
+            document.addEventListener("mousemove", (e) => {
+                if (isPanning && isDrawing) {
+                    currentX = e.clientX - startX;
+                    currentY = e.clientY - startY;
+                    applyTransform(imgElement, canvasElement);
+                    e.preventDefault();
+                }
+            });
+
+            document.addEventListener("mouseup", () => {
+                if (isPanning) {
+                    isDrawing = false;
+                    imgElement.style.cursor = "grab";
+                }
+            });
+
+            // Pan Toggle
+            document.getElementById("pan").addEventListener("click", () => {
+                isPanning = !isPanning;
+                imgElement.style.cursor = isPanning ? "grab" : "default";
+            });
+
+            // Window Level (brightness adjustment)
+            document.getElementById("window-level").addEventListener("click", () => {
+                imgElement.style.filter = imgElement.style.filter === "brightness(1.5)" ? "brightness(1)" : "brightness(1.5)";
+            });
+        };
+
+        // Function to start drawing on canvas
+        const startDrawing = (e, canvasElement) => {
+            isDrawing = true;
+            lastX = e.offsetX;
+            lastY = e.offsetY;
+            lines.push({ x1: lastX, y1: lastY, x2: lastX, y2: lastY });
+            isMeasuring = false;
+        };
+
+        // Function to draw on canvas
+        const draw = (e, canvasElement) => {
+            if (!isDrawing) return;
+            const ctx = canvasElement.getContext("2d");
+            ctx.strokeStyle = "#FF0000";  // Red color for drawing
+            ctx.lineWidth = 2;
+            ctx.lineJoin = "round";
+            ctx.lineCap = "round";
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.stroke();
+            lastX = e.offsetX;
+            lastY = e.offsetY;
+            lines[lines.length - 1].x2 = lastX;
+            lines[lines.length - 1].y2 = lastY;
+        };
+
+        // Function to stop drawing
+        const stopDrawing = () => {
+            isDrawing = false;
+        };
+
+        // Function to clear the drawing on the canvas
+        const clearDrawing = () => {
+            const canvasElements = document.querySelectorAll(".canvas");
+            canvasElements.forEach((canvas) => {
+                const ctx = canvas.getContext("2d");
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            });
+            lines = [];
+            measurementPoints = [];
+            measuring = false;
+            startPoint = null;
+            endPoint = null;
+        };
+
+        // Function to save the drawing to a PNG file
+        const saveDrawing = () => {
+            const canvasElements = document.querySelectorAll(".canvas");
+            canvasElements.forEach((canvas, index) => {
+                const dataURL = canvas.toDataURL("image/png");
+                const a = document.createElement("a");
+                a.href = dataURL;
+                a.download = `drawing-${index + 1}.png`;
+                a.click();
+            });
+        };
+
+        // Function to measure distance between two points
+        const measureDistance = (e, canvasElement) => {
+            if (!measuring && isMeasuring) {
+                measuring = true;
+                startPoint = { x: e.offsetX, y: e.offsetY };
+                const ctx = canvasElement.getContext("2d");
+                ctx.fillStyle = "#FF0000";
+                ctx.beginPath();
+                ctx.arc(e.offsetX, e.offsetY, 5, 0, 2 * Math.PI);
+                ctx.fill();
+            } else if (measuring && isMeasuring) {
+                endPoint = { x: e.offsetX, y: e.offsetY };
+                const ctx = canvasElement.getContext("2d");
+                ctx.strokeStyle = "#FF0000";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(startPoint.x, startPoint.y);
+                ctx.lineTo(endPoint.x, endPoint.y);
+                ctx.stroke();
+                const distance = Math.sqrt(Math.pow(endPoint.x - startPoint.x, 2) + Math.pow(endPoint.y - startPoint.y, 2));
+                alert(`Avstand: ${distance.toFixed(2)} piksler`);
+                measuring = false;
+                startPoint = null;
+                endPoint = null;
+            }
+        };
+
+        // Activate Pen Tool for drawing
+        document.getElementById("pen-tool").addEventListener("click", () => {
+            const imgElement1 = document.getElementById("image-1");
+            const canvasElement1 = document.getElementById("canvas-1");
+            const imgElement2 = document.getElementById("image-2");
+            const canvasElement2 = document.getElementById("canvas-2");
+
+            // Enable or disable pen tool drawing on both canvases
+            canvasElement1.addEventListener("mousedown", (e) => startDrawing(e, canvasElement1));
+            canvasElement1.addEventListener("mousemove", (e) => draw(e, canvasElement1));
+            canvasElement1.addEventListener("mouseup", stopDrawing);
+            canvasElement1.addEventListener("mouseout", stopDrawing);
+
+            canvasElement2.addEventListener("mousedown", (e) => startDrawing(e, canvasElement2));
+            canvasElement2.addEventListener("mousemove", (e) => draw(e, canvasElement2));
+            canvasElement2.addEventListener("mouseup", stopDrawing);
+            canvasElement2.addEventListener("mouseout", stopDrawing);
+        });
+
+        // Activate Measure Tool for measuring distance
+        document.getElementById("measure").addEventListener("click", () => {
+            const imgElement1 = document.getElementById("image-1");
+            const canvasElement1 = document.getElementById("canvas-1");
+            const imgElement2 = document.getElementById("image-2");
+            const canvasElement2 = document.getElementById("canvas-2");
+
+            // Enable or disable measure tool on both canvases
+            isMeasuring = true;
+            canvasElement1.addEventListener("mousedown", (e) => measureDistance(e, canvasElement1));
+            canvasElement2.addEventListener("mousedown", (e) => measureDistance(e, canvasElement2));
+        });
+
+        // Clear Drawing on Button Click
+        document.getElementById("clear-drawing").addEventListener("click", clearDrawing);
+
+        // Save Drawing on Button Click
+        document.getElementById("save-drawing").addEventListener("click", saveDrawing);
+
+        // Image Upload and Rendering
+        document.getElementById("image-upload-1").addEventListener("change", (e) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const imgElement = document.getElementById("image-1");
+                const canvasElement = document.getElementById("canvas-1");
+                imgElement.src = e.target.result;
+                imgElement.onload = () => {
+                    canvasElement.width = imgElement.width;
+                    canvasElement.height = imgElement.height;
+                    setupImageTools(imgElement, canvasElement);
+                };
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        });
+
+        document.getElementById("image-upload-2").addEventListener("change", (e) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const imgElement = document.getElementById("image-2");
+                const canvasElement = document.getElementById("canvas-2");
+                imgElement.src = e.target.result;
+                imgElement.onload = () => {
+                    canvasElement.width = imgElement.width;
+                    canvasElement.height = imgElement.height;
+                    setupImageTools(imgElement, canvasElement);
+                };
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        });
+    </script>
+</body>
+</html>

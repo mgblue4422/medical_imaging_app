@@ -232,31 +232,31 @@
                     color: #333;
                 }
             </style>
-        </head>
-        <body>
-            <!-- Navigation Bar -->
-            <nav>
+       <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Website</title>
+    <link rel="stylesheet" href="path/to/your/css/styles.css"> <!-- Link to your stylesheets -->
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav>
+        {% if session.get('logged_in') %}
+            <a href="#" onclick="loadSection('home')">Home</a>
+            <a href="#" onclick="loadSection('patients')">Patients</a>
+        {% else %}
+            <a href="{{ url_for('login') }}">Patients</a>
+        {% endif %}
 
-{% if session.get('logged_in') %}
-                <a href="#" onclick="loadSection('home')">Home</a>
-                <a href="#" onclick="loadSection('patients')">Patients</a>
-            {% else %}
-                <a href="{{ url_for('login') }}">Patients</a>
-            {% endif %}
+        <a href="#" onclick="window.location.href='zoom1.html'">Analysis</a>
+        <a href="#" onclick="window.location.href='pen.html'">Regional Analysis</a>
 
+        <a href="#" onclick="window.location.href='syntheticReal.html'">Data Synthesization</a>
+        <a href="#" onclick="window.location.href='userguide.html'">Help</a>
 
-    <a href="#" onclick="loadSection('analysis')">Analysis</a>
-       <div class="dropdown">
-            <a href="#" onclick="loadSection('analysis')">Analysis</a>
-            <div class="dropdown-content">
-                <a href="#" onclick="loadSection('automatic_segmentation')">Automatic Segmentation</a>
-                <a href="#" onclick="loadSection('regional_analysis')">Regional Analysis</a>
-            </div>
-        </div>
-     <a href="#" onclick="window.location.href='syntheticReal.html'">Data Synthesization</a>
-                <a href="#" onclick="window.location.href='userguide.html'">Help</a>
-<ul>
-
+        <ul>
             {% if session.get('logged_in') %}
                 <li>Welcome, {{ session.get('username') }}!</li>
                 <li><a href="{{ url_for('logout') }}">Logout</a></li>
@@ -264,80 +264,81 @@
                 <li><a href="{{ url_for('login') }}">Login</a></li>
             {% endif %}
         </ul>
-                </div>x
-            </nav>
-<div id="content">
-            <!-- Hero Section -->
-            <section class="hero">
-                <div class="hero-text">
-                    <h2>Visualize, Analyze, Diagnose</h2>
-                    <p>Our website focuses on providing AI-driven simulations of computer tomography perfusion (CTP) and MRI scans, enabling healthcare professionals and researchers to enhance their understanding and diagnosis of stroke conditions.</p>
-                    <img src="../static/images/6126663.png" height="250" style="float: right;">
-                    <button style="background-color: #ff65ad; color: #fff; padding: 10px 20px; border: none; border-radius: 5px; font-size: 1em;">
-                </div>
-                <img src="https://via.placeholder.com/400" alt="Doctor">
-            </section>
+    </nav>
 
-            <!-- Services Section -->
-            <section class="services">
-                <div class="service">
-                    <img src="../static/images/auto.png" height="50" alt="Consultation Icon">
-                    <a href="phdgraph.html">Automatic Segmentation</a>
-                    <p>AI-powered segmentation of images to identify critical regions efficiently</p>
-                </div>
-                <div class="service">
-                    <img src="../static/images/img9.png" alt="Treatment Icon">
-                    <a href="phdgraph.html">Regional Analysis</a>
-                    <p>Detailed assessment of medical imaging regions for enhanced diagnosis</p>
-                </div>
-                <div class="service">
-                    <img src="../static/images/11698467.png" alt="Confidence Icon">
-                    <h3>Syntethic Analysis</h3>
-                    <p>Generate high-quality synthetic medical imaging data for research </p>
-                </div>
-            </section>
-</div>
-            <!-- Footer -->
-            <footer>
-                <p>&copy; UIS UI 2025 @.</p>
-            </footer>
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <script>
+    <div id="content">
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-text">
+                <h2>Visualize, Analyze, Diagnose</h2>
+                <p>Our website focuses on providing AI-driven simulations of computer tomography perfusion (CTP) and MRI scans, enabling healthcare professionals and researchers to enhance their understanding and diagnosis of stroke conditions.</p>
+                <img src="../static/images/6126663.png" height="250" style="float: right;">
+                <button style="background-color: #ff65ad; color: #fff; padding: 10px 20px; border: none; border-radius: 5px; font-size: 1em;">Learn More</button> <!-- Button fixed -->
+            </div>
+            <img src="https://via.placeholder.com/400" alt="Doctor">
+        </section>
 
-            var isLoggedIn = {{ session.get('logged_in', 'false') | tojson }};
+        <!-- Services Section -->
+        <section class="services">
+            <div class="service">
+                <img src="../static/images/auto.png" height="50" alt="Consultation Icon">
+                <a href="#" onclick="window.location.href='Phdgraph.html'">Automatic Analysis</a>
 
 
-    function loadSection(section) {
-    if (!section) {
-        console.error("Error: Section is undefined!");  // Log the issue
-        return;
-    }
-    if (section === "patients" && !isLoggedIn) {
-        window.location.href = "/login";  // Redirect to login if not logged in
-        return;
-    }
+                <p>AI-powered segmentation of images to identify critical regions efficiently</p>
+            </div>
+            <div class="service">
+                <img src="../static/images/img9.png" alt="Treatment Icon">
+                <a href="#" onclick="window.location.href='Phdgraph.html'">Regional Analysis</a>
 
 
+                <p>Detailed assessment of medical imaging regions for enhanced diagnosis</p>
+            </div>
+            <div class="service">
+                <img src="../static/images/11698467.png" alt="Confidence Icon">
+                <h3>Synthetic Analysis</h3> <!-- Fixed spelling of 'Synthetic' -->
+                <p>Generate high-quality synthetic medical imaging data for research</p>
+            </div>
+        </section>
+    </div>
 
-    console.log("Loading section:", section);  // Check what is being passed
+    <!-- Footer -->
+    <footer>
+        <p>&copy; UIS UI 2025 @.</p>
+    </footer>
 
-    $.ajax({
-        url: '/section/' + section,
-        method: 'GET',
-        success: function(data, status, xhr) {
-    if (xhr.responseURL && xhr.responseURL !== this.url) {
-        window.location.href = xhr.responseURL;  // Redirect the whole page if Flask sends a redirect
-    } else {
-        $('#content').html(data);
-    }
-},
-        error: function() {
-            $('#content').html('<h2>Error loading content</h2>');
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        var isLoggedIn = {{ session.get('logged_in', 'false') | tojson }};
+
+        function loadSection(section) {
+            if (!section) {
+                console.error("Error: Section is undefined!");  // Log the issue
+                return;
+            }
+
+            if (section === "patients" && !isLoggedIn) {
+                window.location.href = "/login";  // Redirect to login if not logged in
+                return;
+            }
+
+            console.log("Loading section:", section);  // Check what is being passed
+
+            $.ajax({
+                url: '/section/' + section,
+                method: 'GET',
+                success: function(data, status, xhr) {
+                    if (xhr.responseURL && xhr.responseURL !== this.url) {
+                        window.location.href = xhr.responseURL;  // Redirect the whole page if Flask sends a redirect
+                    } else {
+                        $('#content').html(data);
+                    }
+                },
+                error: function() {
+                    $('#content').html('<h2>Error loading content</h2>');
+                }
+            });
         }
-    });
-}
-
-</script>
-
-        </body>
-        </html>
+    </script>
+</body>
+</html>

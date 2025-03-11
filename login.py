@@ -151,6 +151,24 @@ def logout():
     session.pop('username', None)  # Optionally remove the username
     return redirect(url_for('index'))  # Redirect to the login page
 
+@app.route('/syntheticReal.html')
+def synthetic_real():
+    return render_template('syntheticReal.html')
+
+@app.route('/userguide.html')
+def user_guide():
+    return render_template('userguide.html')
+
+@app.route('/pen.html')
+def pen():
+    return render_template('pen.html')
+@app.route('/zoom1.html')
+def zoom_1():
+    return render_template('zoom1.html')
+
+@app.route('/Phdgraph.html')
+def phd_graph():
+    return render_template('Phdgraph.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

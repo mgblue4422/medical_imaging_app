@@ -32,7 +32,7 @@ def upload_patient():
         patient_name = request.form['name']
         # Here you would typically save the patient to a database
         return redirect(url_for('patients.list_patients'))  # Redirect to the list of patients
-    return render_template('upload_patient.html')  # Render the upload form
+    return render_template('zoom.html')  # Render the upload form
 
 @patients_bp.route('/search', methods=['GET', 'POST'])
 def search_patient():
