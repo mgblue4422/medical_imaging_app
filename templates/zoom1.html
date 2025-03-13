@@ -3,29 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Regional Bildeanalyse</title>
+    <title>Compare parameters</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #eefaff;
+            background-color: #d9f1ff;
             padding: 20px;
         }
         .container {
-            max-width: 900px;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            max-width: 1200px;
             margin: auto;
             background: white;
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            text-align: center;
         }
-        h2 {
-            font-size: 28px;
+        .controls {
+            width: 30%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .dropdown-label {
             font-weight: bold;
-            text-align: center;
-            color: #3a8ec3;
+            margin-bottom: 5px;
+        }
+        .dropdown-container {
+            display: flex;
+            flex-direction: column;
         }
         .image-preview-container {
+            width: 65%;
             display: flex;
             justify-content: space-around;
             gap: 20px;
@@ -43,60 +54,84 @@
             transition: transform 0.3s ease;
             cursor: pointer;
         }
-        .analysis-results {
-            margin-top: 20px;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 10px;
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        .button-container button {
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background-color: #ff69b4;
+            color: #fff;
+            cursor: pointer;
+        }
+        .button-container button:hover {
+            background-color: #ff1493;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Compare parameters</h2>
-        <p>Last opp og sammenlign to bilder for analyse.</p>
-        <form id="upload-form" enctype="multipart/form-data">
-            <label for="image-upload-1">Velg bilde 1:</label>
-            <input type="file" id="image-upload-1" accept="image/*"><br><br>
-            <label for="image-upload-2">Velg bilde 2:</label>
-            <input type="file" id="image-upload-2" accept="image/*"><br><br>
-        </form>
+        <div class="controls">
+            <h2>Compare parameters</h2>
+            <div class="dropdown-container">
+                <span class="dropdown-label">Patient Category:</span>
+                <select id="patient-category">
+                    <option value="LVO">LVO</option>
+                    <option value="ALL">ALL</option>
+                    <option value="NON LVO">X</option>
+                </select>
+            </div>
+            <div class="dropdown-container">
+                <span class="dropdown-label">Color Maps:</span>
+                <select id="color-maps">
+                    <option value="CBF_COV">CBF_COV</option>
+                    <option value="CBV_LOV">CBV_LOV</option>
+                    <option value="CBF_CTH">CBF_CTH</option>
+                    <option value="CBV_LTH">CBV_LTH</option>
+                </select>
+            </div>
+            <div class="dropdown-container">
+                <span class="dropdown-label">XD:</span>
+                <select id="xd">
+                    <option value="3D">3D</option>
+                    <option value="2D">2D</option>
+                </select>
+            </div>
+            <div class="dropdown-container">
+                <span class="dropdown-label">Image 1:</span>
+                <select id="image-1-type">
+                    <option value="Treated">Treated</option>
+                    <option value="Non-Treated">Non-Treated</option>
+                </select>
+            </div>
+            <div class="dropdown-container">
+                <span class="dropdown-label">Image 2:</span>
+                <select id="image-2-type">
+                    <option value="Treated">Treated</option>
+                    <option value="Non-Treated">Non-Treated</option>
+                </select>
+            </div>
+            <div class="button-container">
+                <button id="visualize-button">Visualize</button>
+                <button id="another-button">Another Button</button>
+            </div>
+        </div>
         <div class="image-preview-container">
             <div class="image-container">
                 <h3>Bilde 1</h3>
-                <img id="image-1" alt="Forhåndsvisning" style="display:none;">
+                <img id="image-1" alt="Forhåndsvisning" style="display:block;">
             </div>
             <div class="image-container">
                 <h3>Bilde 2</h3>
-                <img id="image-2" alt="Forhåndsvisning" style="display:none;">
+                <img id="image-2" alt="Forhåndsvisning" style="display:block;">
             </div>
-        </div>
-        <div class="analysis-results" id="analysis-results" style="display:none;">
-            <h3>Analyse Resultater</h3>
-            <p>Her er analysen av de opplastede bildene.</p>
         </div>
     </div>
     <script>
-        document.getElementById("image-upload-1").addEventListener("change", function(event) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = document.getElementById("image-1");
-                img.src = e.target.result;
-                img.style.display = "block";
-            };
-            reader.readAsDataURL(event.target.files[0]);
-        });
-
-        document.getElementById("image-upload-2").addEventListener("change", function(event) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = document.getElementById("image-2");
-                img.src = e.target.result;
-                img.style.display = "block";
-            };
-            reader.readAsDataURL(event.target.files[0]);
-        });
-
         document.querySelectorAll(".image-container img").forEach(img => {
             img.addEventListener("dblclick", function() {
                 if (this.style.transform === "scale(2)") {
@@ -105,6 +140,16 @@
                     this.style.transform = "scale(2)";
                 }
             });
+        });
+
+        document.getElementById("visualize-button").addEventListener("click", function() {
+            const patientCategory = document.getElementById("patient-category").value;
+            const colorMaps = document.getElementById("color-maps").value;
+            const xd = document.getElementById("xd").value;
+            const image1Type = document.getElementById("image-1-type").value;
+            const image2Type = document.getElementById("image-2-type").value;
+            console.log(`Patient Category: ${patientCategory}, Color Maps: ${colorMaps}, XD: ${xd}, Bilde 1: ${image1Type}, Bilde 2: ${image2Type}`);
+            // Her kan du legge til kode for å visualisere bildene basert på valgene
         });
     </script>
 </body>

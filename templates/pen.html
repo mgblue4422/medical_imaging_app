@@ -90,17 +90,18 @@
         <button id="pen-tool"><img src="/static/images/img_6.png" alt="Pen Tool"></button>
         <button id="clear-drawing"><img src="/static/images/img_7.png" alt="Slett tegning"></button> <!-- Eraser button to clear drawing -->
         <button id="save-drawing"><img src="/static/images/img_8.png" alt="Lagre tegning"></button> <!-- Save drawing button -->
+        <button id="save-csv"><img src="/static/images/img_9.png" alt="Lagre som CSV"></button> <!-- Save as CSV button -->
     </div>
 
     <div class="upload-container">
-        <h2>Last opp CTP eller MRI-bilder</h2>
+        <h2>Upload CTP or MRI images</h2>
         <form id="upload-form" enctype="multipart/form-data">
             <div>
-                <label for="image-upload-1">Velg bilde 1 (CTP eller MRI):</label>
+                <label for="image-upload-1">Choose image 1 (CTP or MRI):</label>
                 <input type="file" id="image-upload-1" name="image1" accept="image/*" required>
             </div>
             <div>
-                <label for="image-upload-2">Velg bilde 2 (CTP eller MRI):</label>
+                <label for="image-upload-2">Choose image (CTP or MRI):</label>
                 <input type="file" id="image-upload-2" name="image2" accept="image/*" required>
             </div>
         </form>
@@ -108,14 +109,14 @@
 
     <div class="image-preview-container">
         <div class="image-container" id="image-container-1">
-            <h3>Bilde 1</h3>
+            <h3>Image 1</h3>
             <canvas id="canvas-1" class="canvas"></canvas>
-            <img id="image-1" alt="Forhåndsvisning bilde 1">
+            <img id="image-1" alt="Preview Image 1">
         </div>
         <div class="image-container" id="image-container-2">
-            <h3>Bilde 2</h3>
+            <h3>Image 2</h3>
             <canvas id="canvas-2" class="canvas"></canvas>
-            <img id="image-2" alt="Forhåndsvisning bilde 2">
+            <img id="image-2" alt="Preview Image 2">
         </div>
     </div>
 
@@ -294,6 +295,17 @@
             }
         };
 
+        // Function to save lines to CSV file
+        const saveLinesToCSV = () => {
+            const csvContent = lines.map((line, index) => `${index + 1},${line.x1},${line.y1},${line.x2},${line.y2}`).join("\n");
+            const blob = new Blob([csvContent], { type: "text/csv" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "lines.csv";
+            a.click();
+        };
+
         // Activate Pen Tool for drawing
         document.getElementById("pen-tool").addEventListener("click", () => {
             const imgElement1 = document.getElementById("image-1");
@@ -331,6 +343,9 @@
 
         // Save Drawing on Button Click
         document.getElementById("save-drawing").addEventListener("click", saveDrawing);
+
+        // Save Lines to CSV on Button Click
+        document.getElementById("save-csv").addEventListener("click", saveLinesToCSV);
 
         // Image Upload and Rendering
         document.getElementById("image-upload-1").addEventListener("change", (e) => {

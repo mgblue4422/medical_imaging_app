@@ -35,6 +35,8 @@
             padding: 20px;
             gap: 20px;
             width: 80%;
+            height: 70vh;
+            overflow-y: auto;
         }
         .carousel-section {
             background: white;
@@ -166,6 +168,16 @@
             padding: 10px;
             text-align: left;
         }
+        .input-table {
+            margin-top: 20px;
+            border-collapse: collapse;
+            width: 100%;
+        }
+        .input-table th, .input-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
     </style>
 </head>
 <body>
@@ -196,19 +208,9 @@
                     <button class="nav-button next">&#10095;</button>
                 </div>
             </div>
-            <table class="stats-table" id="stats-table">
-                <thead>
-                    <tr>
-                        <th>Parameter</th>
-                        <th>Value</th>
-                    </tr>
-                </thead>
-                <tbody id="stats-body">
-                </tbody>
-            </table>
-        </div>
-        <div class="compare-button-container">
-            <button id="compare-button" class="nav-button">Compare Selected</button>
+            <div class="compare-button-container">
+                <button id="compare-button" class="nav-button">Compare Selected</button>
+            </div>
         </div>
     </div>
 
@@ -222,6 +224,45 @@
             <img id="fake-image" src="" alt="Fake Data">
         </div>
         <button id="close-compare" class="nav-button close-button">Close</button>
+    </div>
+
+    <div class="stats-container">
+        <table class="stats-table" id="stats-table">
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody id="stats-body">
+            </tbody>
+        </table>
+    </div>
+
+    <div class="input-table-container">
+        <table class="input-table" id="input-table">
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody id="input-body">
+                <tr>
+                    <td>FID</td>
+                    <td><input type="number" id="fid-input" step="0.01"></td>
+                </tr>
+                <tr>
+                    <td>SSIM</td>
+                    <td><input type="number" id="ssim-input" step="0.01" min="0" max="1"></td>
+                </tr>
+                <tr>
+                    <td>PSNR</td>
+                    <td><input type="number" id="psnr-input" step="0.01"></td>
+                </tr>
+            </tbody>
+        </table>
+        <button id="save-button" class="nav-button">Save</button>
     </div>
 
     <script>
@@ -297,95 +338,30 @@
             }
         });
 
-       // Funksjoner for å regne ut FID, SSIM og PSNR
-function calculateFID(realImage, fakeImage) {
-    try {
-        // Laster inn bildene som tensorer
-        const realTensor = tf.browser.fromPixels(realImage);
-        const fakeTensor = tf.browser.fromPixels(fakeImage);
-
-        // Regner ut FID
-        const realMean = tf.mean(realTensor, [0, 1]);
-        const fakeMean = tf.mean(fakeTensor, [0, 1]);
-        const realCov = tf.cov(realTensor, [0, 1]);
-        const fakeCov = tf.cov(fakeTensor, [0, 1]);
-        const fid = tf.sqrt(tf.sum(tf.square(realMean - fakeMean)) + tf.trace(realCov + fakeCov - 2 * tf.sqrt(tf.mul(realCov, fakeCov))));
-
-        // Returnerer FID-verdien
-        return fid.dataSync()[0].toFixed(2); // Runder til 2 desimaler
-    } catch (error) {
-        console.error("Feil ved beregning av FID:", error);
-        return "Feil";
-    }
-}
-
-function calculateSSIM(realImage, fakeImage) {
-    try {
-        // Laster inn bildene som tensorer
-        const realTensor = tf.browser.fromPixels(realImage);
-        const fakeTensor = tf.browser.fromPixels(fakeImage);
-
-        // Regner ut SSIM
-        const realMean = tf.mean(realTensor, [0, 1]);
-        const fakeMean = tf.mean(fakeTensor, [0, 1]);
-        const realStd = tf.std(realTensor, [0, 1]);
-        const fakeStd = tf.std(fakeTensor, [0, 1]);
-        const cov = tf.cov(realTensor, fakeTensor, [0, 1]);
-        const ssim = (2 * realMean * fakeMean + 1) / (realMean ** 2 + fakeMean ** 2 + 1) * (2 * cov + 1) / (realStd ** 2 + fakeStd ** 2 + 1);
-
-        // Returnerer SSIM-verdien
-        return ssim.dataSync()[0].toFixed(2); // Runder til 2 desimaler
-    } catch (error) {
-        console.error("Feil ved beregning av SSIM:", error);
-        return "Feil";
-    }
-}
-
-function calculatePSNR(realImage, fakeImage) {
-    try {
-        // Laster inn bildene som tensorer
-        const realTensor = tf.browser.fromPixels(realImage);
-        const fakeTensor = tf.browser.fromPixels(fakeImage);
-
-        // Regner ut PSNR
-        const mse = tf.mean(tf.square(realTensor - fakeTensor), [0, 1]);
-        const psnr = 10 * tf.log(255 ** 2 / mse) / tf.log(10);
-
-        // Returnerer PSNR-verdien
-        return psnr.dataSync()[0].toFixed(2); // Runder til 2 desimaler
-    } catch (error) {
-        console.error("Feil ved beregning av PSNR:", error);
-        return "Feil";
-    }
-}
-
-document.getElementById('compare-button').addEventListener('click', () => {
-    if (selectedRealImage && selectedFakeImage) {
-        document.getElementById('real-image').src = selectedRealImage;
-        document.getElementById('fake-image').src = selectedFakeImage;
-        document.getElementById('compare-modal').style.display = 'flex';
-
-        // Regner ut FID, SSIM og PSNR
-        const fid = calculateFID(document.getElementById('real-image'), document.getElementById('fake-image'));
-        const ssim = calculateSSIM(document.getElementById('real-image'), document.getElementById('fake-image'));
-        const psnr = calculatePSNR(document.getElementById('real-image'), document.getElementById('fake-image'));
-
-        // Legger til innhold i tabellen
-        const statsBody = document.getElementById('stats-body');
-        statsBody.innerHTML = '';
-        statsBody.innerHTML += `<tr><td>FID</td><td>${fid}</td></tr>`;
-        statsBody.innerHTML += `<tr><td>SSIM</td><td>${ssim}</td></tr>`;
-        statsBody.innerHTML += `<tr><td>PSNR</td><td>${psnr}</td></tr>`;
-    } else {
-        alert('Please select one image from Real Data and one from Fake Data.');
-    }
-
-});
-
+        document.getElementById('compare-button').addEventListener('click', () => {
+            if (selectedRealImage && selectedFakeImage) {
+                document.getElementById('real-image').src = selectedRealImage;
+                document.getElementById('fake-image').src = selectedFakeImage;
+                document.getElementById('compare-modal').style.display = 'flex';
+            } else {
+                alert('Please select one image from Real Data and one from Fake Data.');
+            }
+        });
 
         document.getElementById('close-compare').addEventListener('click', () => {
             document.getElementById('compare-modal').style.display = 'none';
-            document.getElementById('stats-body').innerHTML = '';
+        });
+
+        document.getElementById('save-button').addEventListener('click', () => {
+            const fid = document.getElementById('fid-input').value;
+            const ssim = document.getElementById('ssim-input').value;
+            const psnr = document.getElementById('psnr-input').value;
+
+            const statsBody = document.getElementById('stats-body');
+            statsBody.innerHTML = '';
+            statsBody.innerHTML += `<tr><td>FID</td><td>${fid}</td></tr>`;
+            statsBody.innerHTML += `<tr><td>SSIM</td><td>${ssim}</td></tr>`;
+            statsBody.innerHTML += `<tr><td>PSNR</td><td>${psnr}</td></tr>`;
         });
     </script>
 </body>
