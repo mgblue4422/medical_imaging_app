@@ -1,3 +1,5 @@
+<!-- list_patients.html -->
+
 {% block content %}
 <!DOCTYPE html>
 <html lang="en">
@@ -9,14 +11,14 @@
         /* General page layout and design */
         body {
             font-family: Arial, sans-serif;
-            background-color: #f0f8ff; /* Light blue background */
+            background-color: #f7f7f7; /* Light gray background */
             color: #333;
             margin: 0;
             padding: 0;
         }
         header {
-            background-color: #80d0f7; /* Light blue header */
-            color: #333;
+            background-color:#86cae3; /* Blue header */
+            color: #ffffff;
             text-align: center;
             padding: 20px;
             font-size: 1.5em;
@@ -31,9 +33,18 @@
         }
 
         /* Content styles */
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
         h2 {
             text-align: center;
-            color: #008cba; /* Slightly darker blue for contrast */
+            color: #ffffff; /* Blue for contrast */
             padding: 20px;
         }
         ul {
@@ -43,18 +54,18 @@
         }
         li {
             padding: 12px;
-            background-color: #ffffff; /* White background for each item */
-            border: 1px solid #d1e8ff; /* Soft border for a light, calming look */
+            background-color: #f7f7f7; /* Light gray background for each item */
+            border: 1px solid #ddd; /* Soft border for a light, calming look */
             border-radius: 5px;
             margin: 8px 0;
             transition: background-color 0.3s ease;
         }
         li:hover {
-            background-color: #e0f7ff; /* Light blue hover effect */
+            background-color: #e5e5e5; /* Light gray hover effect */
             cursor: pointer;
         }
         a {
-            color: #0077cc; /* Calming blue for links */
+            color: #3498db; /* Blue for links */
             text-decoration: none;
             font-weight: bold;
         }
@@ -76,14 +87,16 @@
         <span>Stroke Cases Overview</span>
     </header>
 
-    <h2>List of Stroke Cases</h2>
-    <ul>
-        {% for patient in patients %}
-            <li><a href="{{ url_for('patients.stroke_case', case_id=patient.id) }}">{{ patient.case_name }}</a></li>  <!-- Link to the case detail -->
-        {% else %}
-            <li>No stroke cases found.</li>
-        {% endfor %}
-    </ul>
+    <div class="container">
+        <h2>List of Stroke Cases</h2>
+        <ul>
+            {% for patient in patients %}
+                <li><a href="{{ url_for('patients.stroke_case', case_id=patient.id) }}">{{ patient.case_name }}</a></li>  <!-- Link to the case detail -->
+            {% else %}
+                <li>No stroke cases found.</li>
+            {% endfor %}
+        </ul>
+    </div>
 
 </body>
 </html>

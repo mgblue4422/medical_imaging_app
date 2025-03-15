@@ -91,6 +91,8 @@
         <button id="clear-drawing"><img src="/static/images/img_7.png" alt="Slett tegning"></button> <!-- Eraser button to clear drawing -->
         <button id="save-drawing"><img src="/static/images/img_8.png" alt="Lagre tegning"></button> <!-- Save drawing button -->
         <button id="save-csv"><img src="/static/images/img_9.png" alt="Lagre som CSV"></button> <!-- Save as CSV button -->
+        <button id="brightness-up"><img src="/static/images/img_11.png" alt="Øk lysstyrke"></button>
+        <button id="brightness-down"><img src="/static/images/img_10.png" alt="Reduser lysstyrke"></button>
     </div>
 
     <div class="upload-container">
@@ -144,6 +146,7 @@
         let startPoint = null;
         let endPoint = null;
         let isMeasuring = false;
+        let brightness = 1;
 
         // Function to apply transformations to the image and canvas
         const applyTransform = (imgElement, canvasElement) => {
@@ -198,15 +201,22 @@
                 }
             });
 
-            // Pan Toggle
-            document.getElementById("pan").addEventListener("click", () => {
-                isPanning = !isPanning;
-                imgElement.style.cursor = isPanning ? "grab" : "default";
-            });
-
             // Window Level (brightness adjustment)
             document.getElementById("window-level").addEventListener("click", () => {
-                imgElement.style.filter = imgElement.style.filter === "brightness(1.5)" ? "brightness(1)" : "brightness(1.5)";
+                brightness += 0.1;
+                imgElement.style.filter = `brightness(${brightness})`;
+            });
+
+            // Brightness Up
+            document.getElementById("brightness-up").addEventListener("click", () => {
+                brightness = Math.min(brightness + 0.1, 2);
+                imgElement.style.filter = `brightness(${brightness})`;
+            });
+
+            // Brightness Down
+            document.getElementById("brightness-down").addEventListener("click", () => {
+                brightness = Math.max(brightness - 0.1, 0.1);
+                imgElement.style.filter = `brightness(${brightness})`;
             });
         };
 
