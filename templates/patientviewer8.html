@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Case Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Existed styles from your first code THIS IS THE MAIN DASHBOARD*/
+        body {
+            font-family: 'Fira Sans', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f9fc;
+            color: #333;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .header {
+            text-align: center;
+            padding: 1.5em;
+            background: #6db3f2;
+            color: white;
+            font-size: 1.8em;
+            border-bottom: 2px solid #5a9bd4;
+        }
+        .content {
+            display: flex;
+            flex: 1;
+            margin-top: 20px;
+        }
+        .sidebar {
+            width: 25%;
+            background: #e9f3fc;
+            padding: 1em;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            border-right: 2px solid #c1d9ef;
+        }
+        .sidebar ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .sidebar ul li {
+            margin: 0.8em 0;
+            cursor: pointer;
+            padding: 0.8em;
+            border-radius: 8px;
+            background: #c1e0fa;
+            transition: background 0.3s;
+        }
+        .sidebar ul li:hover {
+            background: #6db3f2;
+            color: white;
+        }
+        .main {
+            flex: 1;
+            padding: 1.5em;
+            background: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            margin-left: 20px;
+            overflow-y: auto;
+        }
+        .impressum {
+            text-align: center;
+            padding: 1em;
+            background: #f0f0f0;
+            font-size: 0.8em;
+            color: #555;
+        }
+        .feature-content {
+            display: none;
+        }
+        .feature-content.active {
+            display: block;
+        }
+
+        /* New styles for the second code (Segmentation & Carousel) */
+        .carousel-container {
+            perspective: 1000px;
+            margin: 20px auto;
+            position: relative;
+            width: 80%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-direction: column; /* Stack title and buttons vertically */
+    margin-top: 40px; /* Add margin to create space above the second carousel */
+
+        }
+
+
+        .carousel {
+            display: flex;
+            transform-style: preserve-3d;
+            transition: transform 0.8s;
+        }
+        .carousel img {
+            width: 150px;
+            height: auto;
+            object-fit: cover;
+            border-radius: 10px;
+            margin: 0 10px;
+            transform-origin: center center;
+            transition: transform 0.8s;
+            backface-visibility: hidden;
+        }
+        .carousel img.center {
+            transform: scale(2);
+            z-index: 1;
+        }
+        .img-container {
+    flex: 1; /* Allow the container to grow */
+    margin: 10px; /* Add margin around each image container */
+    text-align: center; /* Center the label text */
+        .nav-button {
+            background-color: #6db3f2;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.3s;
+           /* position: absolute;*/
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        #prev {
+            left: -50px;
+        }
+        #next {
+            right: -50px;
+        }
+        .nav-button:hover {
+            background-color: #5a9bd4;
+        }
+        .image-counter {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 1em;
+            color: #333;
+        }
+        .image-label {
+            text-align: center;
+            margin-top: 5px;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+     #second-carousel {
+    display: none; /* Hide the second carousel by default */
+         margin-top: 30px; /* Add margin to create space above the second carousel */
+}
+     .carousel-title {
+    text-align: center; /* Center the title */
+    margin-bottom: 20px; /* Add space below the title */
+}
+
+.carousel-wrapper {
+    display: flex; /* Align buttons and carousel in a row */
+    align-items: center; /* Center items vertically */
+}
+#file-type-select-2 {
+    text-align: left; /* Align text to the left */
+    margin-bottom: 20px; /* Add some space below the select box */
+    display: block; /* Ensure it takes the full width */
+}
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            Medical Case Dashboard
+            <button id="toggle-sidebar" style="margin-left: 10px; background-color: #6db3f2; border: none; color: white; padding: 0.8em; border-radius: 5px; cursor: pointer;">Toggle Sidebar</button>
+        </div>
+        <div class="content">
+            <div class="sidebar">
+                <ul>
+                    <li data-feature="case-analysis">Case Analysis</li>
+                    <li data-feature="patient-info">Patient Information</li>
+                    <li data-feature="doctor-notes">Doctor's Notes</li>
+                    <li data-feature="Segmentation">Segmentation</li>
+
+
+                </ul>
+            </div>
+            <div class="main">
+                <!-- Case Analysis with File Upload - First Section -->
+                <div id="case-analysis" class="feature-content active">
+                    <h3>Case Analysis</h3>
+                    <div class="file-upload-container">
+                        <p><strong>Select Files to Upload</strong></p>
+                        <input type="file" id="file-upload" multiple>
+                    </div>
+                    <div id="file-header"></div>
+                    <div id="uploaded-files"></div>
+                    <div id="analysis-results"></div>
+                </div>
+
+                <!-- Segmentation Section -->
+
+                <div id="Segmentation" class="feature-content">
+    <h3>Segmentation</h3>
+    <label for="file-type-select">Select File Type:</label>
+    <select id="file-type-select">
+        <option value="ctp">CTP</option>
+        <option value="cta">CTA</option>
+        <option value="ground_truth">Ground Truth</option>
+    </select>
+    <input type="file" id="segmentation-file-upload" multiple>
+                    <!-- Toggle Button -->
+    <button id="toggle-overlay" style="margin: 10px; background-color: #6db3f2; color: white; border: none; padding: 0.8em; border-radius: 5px; cursor: pointer;">Overlay: Off</button>
+                    <!-- Show/Hide Second Carousel Checkbox -->
+    <label for="toggle-carousel">Show Perfusion Maps:</label>
+    <input type="checkbox" id="toggle-carousel">
+                    <label for="sync-carousels">Sync Carousels:</label>
+<input type="checkbox" id="sync-carousels" checked>
+                    <!-- Overlay Selection Button -->
+<label for="overlay-select">Choose Overlay:</label>
+<select id="overlay-select" style="margin: 10px; padding: 0.5em; border-radius: 5px;">
+    <option value="ground_truth">Ground Truth</option>
+    <option value="manual_segmentation" disabled>Manual Segmentation</option>
+    <option value="automatic_segmentation" disabled>Automatic Segmentation</option>
+</select>
+
+    <!-- First Carousel -->
+    <div class="carousel-container">
+        <div class="carousel-wrapper">
+        <button class="nav-button" id="prev1">&#10094;</button>
+        <div class="carousel" id="carousel1"></div>
+        <button class="nav-button" id="next1">&#10095;</button>
+    </div>
+        <div class="image-counter" id="image-counter1">0/0</div>
+    </div>
+
+
+    <!-- Second Carousel -->
+    <div class="carousel-container" id="second-carousel">
+        <div class="carousel-title">
+        <h3>Perfusion maps</h3> <!-- Title for the second carousel -->
+            <label for="file-type-select-2">Select File Type:</label>
+        <select id="file-type-select-2">
+            <option value="cbv">CBV</option>
+            <option value="mtt">MTT</option>
+            <option value="tmax">TMAX</option>
+            <option value="cbf">CBF</option>
+
+        </select>
+    </div>
+
+
+        <div class="carousel-wrapper">
+        <button class="nav-button" id="prev2">&#10094;</button>
+        <div class="carousel" id="carousel2"></div>
+        <button class="nav-button" id="next2">&#10095;</button>
+    </div>
+        <div class="image-counter" id="image-counter2">0/0</div>
+    </div>
+
+</div>
+
+
+
+                <!-- Other Sections -->
+               <div id="patient-info" class="feature-content">
+    <div class="note-box">
+        <label><strong>Name:</strong> <input type="text" id="patient-name" value="{{ patient_name }}" readonly></label><br><br>
+        <label><strong>Medical History / Notes:</strong></label><br>
+        <textarea id="patient-history" readonly>XXX</textarea><br><br>
+
+        <label><strong>CSV Data:</strong></label><br>
+        {% for filename, table in csv_data.items() %}
+            <h5>{{ filename }}</h5>
+            <div>{{ table|safe }}</div>  <!-- Render the HTML table -->
+        {% endfor %}
+
+        <button id="save-patient-info" style="background-color: #6db3f2; color: white; border: none; padding: 0.8em; border-radius: 5px; cursor: pointer;">Save</button>
+    </div>
+</div>
+                <div id="doctor-notes" class="feature-content">
+                    <h3>Doctor's Notes</h3>
+                    <div class="note-box">
+                        <textarea id="doctor-notes-text" placeholder="Enter notes here..."></textarea>
+                    </div>
+                    <button id="save-doctor-notes" style="background-color: #6db3f2; color: white; border: none; padding: 0.8em; border-radius: 5px; cursor: pointer;">Save</button>
+                </div>
+
+            </div>
+        </div>
+        <div class="impressum">
+            .
+        </div>
+    </div>
+
+    <script>
+
+        // Existing script for sidebar and file upload handling
+        window.onload = function() {
+            document.getElementById('case-analysis').classList.add('active');
+            document.querySelector('.sidebar ul li[data-feature="case-analysis"]').classList.add('active');
+        };
+
+        document.querySelectorAll('.sidebar ul li').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.feature-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                const featureId = item.getAttribute('data-feature');
+                if (featureId) {
+                    document.getElementById(featureId).classList.add('active');
+                }
+            });
+        });
+document.getElementById('save-doctor-notes').addEventListener('click', async () => {
+    const notes = document.getElementById('doctor-notes-text').value;
+
+    const response = await fetch(`http://127.0.0.1:5000/patients/${patientName}/save_notes`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ notes }),
+    });
+
+    if (response.ok) {
+        alert('Doctor\'s notes saved successfully.');
+    } else {
+        alert('Failed to save doctor\'s notes.');
+    }
+});
+
+// Get references to the necessary DOM elements for both carousels
+const segmentationFileUpload = document.getElementById('segmentation-file-upload');
+const carousel1 = document.getElementById('carousel1');
+const carousel2 = document.getElementById('carousel2');
+const prevBtn1 = document.getElementById('prev1');
+const nextBtn1 = document.getElementById('next1');
+const prevBtn2 = document.getElementById('prev2');
+const nextBtn2 = document.getElementById('next2');
+const imageCounter1 = document.getElementById('image-counter1');
+const imageCounter2 = document.getElementById('image-counter2');
+const fileTypeSelect = document.getElementById('file-type-select'); // Reference to the file type dropdown
+
+let images1 = [];
+let images2 = [];
+let currentIndex1 = 0;
+let currentIndex2 = 0;
+
+const patientName = {{ patient_name | tojson }};
+
+// Get reference to the toggle button
+const toggleOverlayButton = document.getElementById('toggle-overlay');
+let isOverlayEnabled = false; // State to track if overlay is enabled
+
+
+// Function to fetch slices based on overlay state
+async function fetchSlices(fileType, isSecondCarousel = false) {
+    const endpoint = isSecondCarousel ? 'slices2' : (isOverlayEnabled ? 'slices' : 'slices2'); // Choose the endpoint based on the carousel
+    const response = await fetch(`http://127.0.0.1:5000/patients/${endpoint}/${patientName}/${fileType}`);
+    if (!response.ok) {
+        console.error('Failed to fetch slices:', response.statusText);
+        return [];
+    }
+    const data = await response.json();
+    console.log('Fetched slices:', data.slices); // Log the fetched slices
+    return data.slices;
+}
+
+// Initialize both carousels based on the selected file type
+async function initializeCarousels() {
+    const fileType = fileTypeSelect.value; // Get the selected file type
+    const fileType2 = fileTypeSelect2.value; // Get the selected file type
+
+    // Check if overlay is enabled and file type is not "CTP"
+    if (isOverlayEnabled && fileType !== 'ctp') {
+        alert('Overlay is only available for CTP file type.'); // Display alert
+        isOverlayEnabled = false; // Reset overlay state
+        toggleOverlayButton.textContent = 'Overlay: Off'; // Update button text
+    }
+
+    images1 = await fetchSlices(fileType); // Fetch for the first carousel (with overlay logic)
+    images2 = await fetchSlices(fileType2, true); // Fetch for the second carousel (without overlay)
+    currentIndex1 = 0;
+    currentIndex2 = 0;
+    displayImages(carousel1, imageCounter1, images1, currentIndex1);
+    displayImages(carousel2, imageCounter2, images2, currentIndex2);
+}
+
+
+// Event listener for the toggle button
+toggleOverlayButton.addEventListener('click', () => {
+    isOverlayEnabled = !isOverlayEnabled; // Toggle the overlay state
+    toggleOverlayButton.textContent = `Overlay: ${isOverlayEnabled ? 'On' : 'Off'}`; // Update button text
+    initializeCarousels(); // Re-initialize the first carousel with the new overlay state
+});
+
+// Event listener for file type selection
+fileTypeSelect.addEventListener('change', () => {
+    initializeCarousels(); // Re-initialize both carousels when the file type changes
+});
+
+// File upload event listener
+segmentationFileUpload.addEventListener('change', (event) => {
+    images1 = Array.from(event.target.files);
+    images2 = [...images1]; // Duplicate images for the second carousel
+    currentIndex1 = 0;
+    currentIndex2 = 0;
+
+    displayImages(carousel1, imageCounter1, images1, currentIndex1);
+    displayImages(carousel2, imageCounter2, images2, currentIndex2);
+});
+
+// Function to display images in the carousel
+function displayImages(carousel, imageCounter, images, currentIndex) {
+    carousel.innerHTML = '';
+    imageCounter.textContent = `${currentIndex + 1}/${images.length}`;
+
+    for (let i = 0; i < 4; i++) {
+        const index = (currentIndex + i) % images.length;
+        const imgContainer = document.createElement('div');
+        const img = document.createElement('img');
+        const label = document.createElement('div');
+
+        img.src = `http://127.0.0.1:5000/${images[index]}`; // Adjust this if needed
+        console.log('Displaying image:', img.src); // Log the image source
+        label.textContent = `Image ${index + 1}`;
+        label.classList.add('image-label');
+
+        if (i === 1) img.classList.add('center');
+        imgContainer.classList.add('img-container'); // Add a class for the image container
+
+        imgContainer.appendChild(img);
+        imgContainer.appendChild(label);
+        carousel.appendChild(imgContainer);
+    }
+}
+
+// Get reference to the sync checkbox
+const syncCheckbox = document.getElementById('sync-carousels');
+// Navigation button event listeners for the first carousel
+prevBtn1.addEventListener('click', () => {
+    currentIndex1 = (currentIndex1 - 1 + images1.length) % images1.length;
+    displayImages(carousel1, imageCounter1, images1, currentIndex1);
+
+    // Sync if the checkbox is checked and the second carousel is visible
+    if (syncCheckbox.checked && secondCarouselContainer.style.display === 'flex') {
+        currentIndex2 = currentIndex1; // Sync the second carousel index
+        displayImages(carousel2, imageCounter2, images2, currentIndex2);
+    }
+});
+
+nextBtn1.addEventListener('click', () => {
+    currentIndex1 = (currentIndex1 + 1) % images1.length;
+    displayImages(carousel1, imageCounter1, images1, currentIndex1);
+
+    // Sync if the checkbox is checked and the second carousel is visible
+    if (syncCheckbox.checked && secondCarouselContainer.style.display === 'flex') {
+        currentIndex2 = currentIndex1; // Sync the second carousel index
+        displayImages(carousel2, imageCounter2, images2, currentIndex2);
+    }
+});
+
+// Navigation button event listeners for the second carousel
+prevBtn2.addEventListener('click', () => {
+    currentIndex2 = (currentIndex2 - 1 + images2.length) % images2.length;
+    displayImages(carousel2, imageCounter2, images2, currentIndex2);
+
+    // Sync if the checkbox is checked and the first carousel is visible
+    if (syncCheckbox.checked && carousel1.style.display !== 'none') {
+        currentIndex1 = currentIndex2; // Sync the first carousel index
+        displayImages(carousel1, imageCounter1, images1, currentIndex1);
+    }
+});
+
+nextBtn2.addEventListener('click', () => {
+    currentIndex2 = (currentIndex2 + 1) % images2.length;
+    displayImages(carousel2, imageCounter2, images2, currentIndex2);
+
+    // Sync if the checkbox is checked and the first carousel is visible
+    if (syncCheckbox.checked && carousel1.style.display !== 'none') {
+        currentIndex1 = currentIndex2; // Sync the first carousel index
+        displayImages(carousel1, imageCounter1, images1, currentIndex1);
+    }
+});
+
+
+// Initialize the carousels for the default file type on page load
+document.addEventListener('DOMContentLoaded', () => {
+    initializeCarousels(); // Initialize with the default file type
+});
+
+
+
+
+
+
+
+
+
+// Initialize the carousels for the default file type on page load
+document.addEventListener('DOMContentLoaded', () => {
+    initializeCarousels(); // Initialize with the default file type
+});
+document.addEventListener('DOMContentLoaded', () => {
+        const toggleCarouselCheckbox = document.getElementById('toggle-carousel');
+        const secondCarouselContainer = document.getElementById('second-carousel'); // Use ID to target
+
+        function toggleSecondCarousel() {
+            console.log('Checkbox checked:', toggleCarouselCheckbox.checked); // Debugging line
+            if (toggleCarouselCheckbox.checked) {
+                secondCarouselContainer.style.display = 'flex'; // Show the second carousel
+            } else {
+                secondCarouselContainer.style.display = 'none'; // Hide the second carousel
+            }
+        }
+
+        toggleCarouselCheckbox.addEventListener('change', toggleSecondCarousel);
+        toggleSecondCarousel(); // Call to set the initial state
+    });
+
+        // Event listener for file type selection for the first carousel
+fileTypeSelect.addEventListener('change', () => {
+    initializeCarousels(); // Re-initialize both carousels when the file type changes
+});
+
+// Event listener for file type selection for the second carousel
+const fileTypeSelect2 = document.getElementById('file-type-select-2');
+fileTypeSelect2.addEventListener('change', () => {
+    initializeCarousels(); // Re-initialize the second carousel when the file type changes
+});
+
+    </script>
+</body>
+</html>
