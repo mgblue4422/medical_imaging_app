@@ -8,14 +8,18 @@ from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import InputRequired, Length, ValidationError
 from flask_bcrypt import Bcrypt
 from db1 import db1
+from flask_migrate import Migrate
+from patientdatabase5 import *
+from syntheticdata import syntheticdata
 
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://///Users/ashvini12/PycharmProjects/medical_imaging_app/database.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Volumes/Seagate Bac/Thesis project 2025/database.db'
 app.config['SECRET_KEY'] = 'your_secret_key'
 db1.init_app(app)  # Initialize the first db1 instance with the app
 bcrypt = Bcrypt(app)
+migrate = Migrate(app, db1)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -61,6 +65,9 @@ class LoginForm(FlaskForm):
 # Register the patients blueprint
 app.register_blueprint(patients_bp, url_prefix='/patients')
 # Hjemmeside rute for login-skjemaet
+
+app.register_blueprint(syntheticdata, url_prefix='/syntheticdata')
+
 
 
 app.secret_key = 'your_secret_key'  # Replace with a strong secret key
@@ -138,9 +145,18 @@ def section(section_name):
         else:
             return redirect(url_for('patients.patients'))  # Redirect to the patients blueprint
 
+
         #return '<h2>Patients Section</h2><p>This is where you can manage patients.</p>'#render_template('patients.html')  # Render patients.html
     elif section_name == 'analysis':
         return   '<h2>Analysis Section</h2><p>This is where you can perform analysis.</p>'#render_template('analysis.html')  # Render analysis.html
+
+    elif section_name == 'syntheticdata':
+
+
+            return redirect(url_for('syntheticdata.syntheticdata'))  # Redirect to the patients blueprint
+
+
+
     else:
         return "Section not found", 404
 

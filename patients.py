@@ -1,15 +1,22 @@
 from flask import Blueprint, render_template, request, redirect, url_for ,jsonify, current_app
 from decorators import login_required
 from db1 import db1  # Adjust the import based on your project structure
-from patientsdatabase2 import StrokeCase , Session, NiiFile # Adjust the import based on your project structure
+#from patientsdatabase2 import StrokeCase , Session, NiiFile # Adjust the import based on your project structure
+from patientdatabase5 import Patient ,CTAFile, CBFFile ,CBVFile ,CTPFile ,MRIFile  ,MTTFile , TMAXFile , GroundTruthFile ,DoctorNote
 import nibabel as nib  # Add this line
 import matplotlib.pyplot as plt
+import numpy as np
+from PIL import Image
+import pandas as pd
+from io import BytesIO
 import os
+
+
 
 # Initialize the Blueprint
 patients_bp = Blueprint('patients', __name__)
-# Path to your NIfTI file
-NIFTI_FILE = '/Users/g/Desktop/isles24_train_b/derivatives/sub-stroke0003/ses-01/sub-stroke0003_ses-01_space-ncct_cta.nii.gz'
+
+
 @patients_bp.route('/')
 @login_required
 def patients():
@@ -20,7 +27,7 @@ def serve_static(filename):
     return patients_bp.send_static_file(filename)
 @patients_bp.route('/list')
 def list_patients():
-    patients = StrokeCase.query.all()  # Fetch all patients from the database
+    patients = Patient.query.all()  # Fetch all patients from the database
 
     print(f"Patients fetched: {patients}")  # Debugging line
     return render_template('list_patients.html', patients=patients)  # Render the list of patients
@@ -46,137 +53,323 @@ def search_patient():
 @patients_bp.route('/stroke_case/<int:case_id>')
 @login_required  # Protect this route with login_required
 def stroke_case(case_id):
-    case = StrokeCase.query.get_or_404(case_id)  # Fetch the stroke case by ID
-    sessions = Session.query.filter_by(case_id=case.id).all()  # Fetch related sessions
-    nii_files = NiiFile.query.filter(Session.id == NiiFile.session_id, Session.case_id == case.id).all()  # Fetch related NIfTI files  # Fetch related NIfTI files
-    # You can also fetch related data here, e.g., sessions or files
-    # Fetch the first session related to the stroke case
-    first_session = Session.query.filter_by(case_id=case.id).first()  # Get the first session
+    case = Patient.query.get_or_404(case_id)  # Fetch the stroke case by ID
+    csv_files = case.csv_files  # Fetch the associated CSV files
 
-    # Fetch the first NIfTI file related to the first session
-    first_nii_file = None
-    if first_session:
-        first_nii_file = NiiFile.query.filter_by(session_id=first_session.id).first()  # Get the first NIfTI file
-    return render_template('patientviewer3.html', case=case, sessions=sessions ,nii_files=nii_files, first_session=first_session, first_nii_file=first_nii_file )  # Pass the case to the template
+    # Read CSV data into a dictionary
+    csv_data = {}
+    for csv_file in csv_files:
+        # Use BytesIO to read the binary data as a CSV
+
+        df = pd.read_csv(BytesIO(csv_file.file_data))
+        df_cleaned = df.dropna(axis=1, how='any')
+
+        csv_data[csv_file.filename] = df_cleaned.transpose().to_html(classes='table table-striped', index=True)  # Convert to HTML table
+
+    return render_template('patientviewer8.html', case=case, patient_name=case.patient_name  , csv_data=csv_data)  # Pass the case to the template
+
+@patients_bp.route('/download_csv/<int:file_id>')
+@login_required
+def download_csv(file_id):
+    csv_file = CSVFile.query.get_or_404(file_id)  # Fetch the CSV file by ID
+    response = make_response(csv_file.file_data)
+    response.headers['Content-Disposition'] = f'attachment; filename={csv_file.filename}'
+    response.headers['Content-Type'] = 'text/csv'  # Adjust the content type if necessary
+    return response
 
 
-@patients_bp.route('/drop_table/<table_name>')
-def drop_table(table_name):
-    with current_app.app_context():  # Use current_app to get the main app context
-        if table_name == 'stroke_case':
-            StrokeCase.__table__.drop(db1.engine)  # Drop the StrokeCase table
-        elif table_name == 'session':
-            Session.__table__.drop(db1.engine)  # Drop the Session table
-        elif table_name == 'nii_file':
-            NiiFile.__table__.drop(db1.engine)  # Drop the NiiFile table
-        else:
-            return "Table not found!", 404
-    return f"Table '{table_name}' has been dropped successfully!"
+@patients_bp.route('/patients/<patient_name>/save_notes', methods=['POST'])
+@login_required  # Protect this route with login_required
+def save_notes_for_case(patient_name):
+    data = request.json
+    notes = data.get('notes', '')
 
-#I commented this out for now but it workss
-# Example function to get the NIfTI file path based on case ID
-#def get_nifti_file_path(case_id):
-    # Replace this with your logic to retrieve the NIfTI file path based on the case ID
-    # For example, you might query a database to get the file path
- #   return '/Users/g/Desktop/isles24_train_b/derivatives/sub-stroke0003/ses-01/sub-stroke0003_ses-01_space-ncct_cta.nii.gz'
+    # Fetch the patient case by ID
+    case = Patient.query.filter_by(patient_name=patient_name).first()
+    patient = case.patient  # Assuming the case has a relationship to the Patient model
 
-@patients_bp.route('/get_nifti_file/<case_name>/<session_name>/<file_type>')
-def get_nifti_file_path(case_id, session_name, file_type):
-    # Query the database for the stroke case
-    stroke_case = StrokeCase.query.get(case_id)
-    if not stroke_case:
-        print(f"Stroke case with ID {case_id} not found.")
-        return None
+    if patient:
+        # Create a new DoctorNote instance
+        new_note = DoctorNote(patient_id=patient.id, note=notes)
+        db1.session.add(new_note)  # Add the new note to the session
+        try:
+            db1.session.commit()  # Commit the changes to the database
+            return jsonify({"message": "Doctor's notes saved successfully.", "note_id": new_note.id}), 200
+        except Exception as e:
+            db1.session.rollback()  # Rollback in case of error
+            return jsonify({"message": "An error occurred while saving notes.", "error": str(e)}), 500
     else:
-        print(f"Stroke case with ID {case_id} found: {stroke_case}")
+        return jsonify({"message": "Patient not found."}), 404
 
-    session_record = Session.query.filter_by(session_name=session_name, case_id=stroke_case.id).first()
-    if not session_record:
-        print(f"Session '{session_name}' not found for case ID {case_id}.")
-        return None
+
+@patients_bp.route('/patients/<patient_name>/get_notes', methods=['GET'])
+@login_required  # Protect this route with login_required
+def get_notes_for_case(patient_name):
+    case = Patient.query.filter_by(patient_name=patient_name).first()
+   # case = Patient.query.get_or_404(case_id)
+    patient = case.patient  # Assuming the case has a relationship to the Patient model
+
+    if patient:
+        notes = DoctorNote.query.filter_by(patient_id=patient.id).all()  # Fetch all notes for the patient
+        notes_data = [{"id": note.id, "note": note.note, "created_at": note.created_at.isoformat()} for note in notes]
+        return jsonify({"notes": notes_data}), 200
     else:
-        print(f"Session case with ID {case_id} found: {stroke_case}")
+        return jsonify({"message": "Patient not found."}), 404
 
-    filename = f"{stroke_case.case_name}_{session_record.session_name}_{file_type}.nii.gz"
-    nii_file = NiiFile.query.filter_by(filename=filename, session_id=session_record.id).first()
-    if not nii_file:
-        print(f"NIFTI file '{filename}' not found in session ID {session_record.id}.")
-        return None
+
+@patients_bp.route('/slices2/<patient_name>/<file_type>', methods=['GET'])
+def get_slices2(patient_name, file_type):
+    # Query the Patient by name
+    patient = Patient.query.filter_by(patient_name=patient_name).first()
+    if not patient:
+        return jsonify({'error': 'Patient not found'}), 404
+
+    # Determine which file type to query based on the file_type parameter
+    if file_type == 'ctp':
+        file_record = CTPFile.query.filter_by(patient_id=patient.id).first()
+    elif file_type == 'mri':
+        file_record = MRIFile.query.filter_by(patient_id=patient.id).first()
+    elif file_type == 'mtt':
+        file_record = MTTFile.query.filter_by(patient_id=patient.id).first()
+    elif file_type == 'cbv':
+        file_record = CBVFile.query.filter_by(patient_id=patient.id).first()
+    elif file_type == 'cbf':
+        file_record = CBFFile.query.filter_by(patient_id=patient.id).first()
+    elif file_type == 'tmax':
+        file_record = TMAXFile.query.filter_by(patient_id=patient.id).first()
+    elif file_type == 'cta':
+        file_record = CTAFile.query.filter_by(patient_id=patient.id).first()
+    elif file_type == 'ground_truth':
+        file_record = GroundTruthFile.query.filter_by(patient_id=patient.id).first()
     else:
-        print(f"Session case with ID {filename} found")
+        return jsonify({'error': 'Invalid file type'}), 400
 
-    if nii_file.file_data:
-        print(f"NIFTI file path: {filename}")
-    else:
-        print("NIFTI file not found. here")
+    if not file_record:
+        return jsonify({'error': f'{file_type.upper()} file not found for patient {patient_name}'}), 404
 
-    return nii_file.file_data
+    # Create a temporary file to save the binary data
+    base_folder_path = os.path.join('temp_files')
+    temp_file_path = os.path.join(base_folder_path, file_record.filename)
 
-
-@patients_bp.route('/get_nifti_file2/<case_id>/<session_name>/<file_type>')
-def get_nifti_file_path2(case_id):
-    # Query the database for the stroke case
-    stroke_case = StrokeCase.query.get(case_id)
-    if not stroke_case:
-        print(f"Stroke case with ID {case_id} not found.")
-        return jsonify({'error': 'Stroke case not found'}), 404
-
-    print(f"Stroke case with ID {case_id} found: {stroke_case}")
-
-    session_record = Session.query.filter_by(case_id=stroke_case.id).first()
-    if not session_record:
-        print(f"No sessions found for case ID {case_id}.")
-        return jsonify({'error': 'Session not found'}), 404
-
-    print(f"First session case with ID {case_id} found: {session_record}")
-    # Construct the filename based on the expected format
-
-    nii_file = NiiFile.query.filter_by(session_id=session_record.id).first()
-    if not nii_file:
-        print(f"No NIFTI files found for session ID {session_record.id}.")
-        return jsonify({'error': 'NIFTI file not found'}), 404
-
-    print(f"First NIFTI file found: {nii_file.filename}")
-    filename = nii_file.filename
-    print(f"First NIFTI file found: {filename}")
-    #filename = f"{stroke_case.case_name}_{session_record.session_name}_{file_type}.nii.gz"
-
-    # Construct the full path to the NIFTI file
-    derivatives_path = os.path.join('/Users/g/Desktop/isles24_train_b', 'derivatives', stroke_case.case_name,
-                                    session_record.session_name, filename)
-
-    # Check if the file exists
-    if not os.path.isfile(derivatives_path):
-        print(f"NIFTI file '{filename}' not found at path: {derivatives_path}.")
-        return jsonify({'error': 'NIFTI file not found'}), 404
-
-    print(f"NIFTI file path: {derivatives_path}")
-    #return jsonify({'file_path': derivatives_path}), 200
-    return derivatives_path
-
-@patients_bp.route('/slices/<int:case_id>')
-def get_slices(case_id):
-    # Get the NIfTI file path for the given case ID
-    #nifti_file = get_nifti_file_path(case_id)
-    nifti_file = get_nifti_file_path2(case_id)
-
-    # Check if the NIfTI file exists
-    if not os.path.exists(nifti_file):
-        return jsonify({'error': 'NIfTI file not found'}), 404
+    # Save the binary data to a temporary file
+    with open(temp_file_path, 'wb') as f:
+        f.write(file_record.file_data)
 
     # Load the NIfTI file
-    img = nib.load(nifti_file)
+    img = nib.load(temp_file_path)
     data = img.get_fdata()
+
+    if file_type == 'ctp':
+        data = data[:, :, :, 0]  # Use the first 3D volume from the 4D data
+
+    # Print the shape of the data
+    print(f"Data shape: {data.shape}")
+
+    def normalize(data, vmin=None, vmax=None):
+        if vmin is None:
+            vmin = np.min(data)
+        if vmax is None:
+            vmax = np.max(data)
+        return np.clip((data - vmin) / (vmax - vmin), 0, 1)
+
+    # Inside your get_slices2 function, after loading the NIfTI file
+    # Define normalization parameters for each file type
+    normalization_params = {
+        'cbf': (0, 100),
+        'cbv': (0, 5),
+        'mtt': (7, 13),
+        'tmax': (2, 10),
+        'cta':(0,100),
+        'ctp': (0, 100)
+    }
 
     # Generate paths for all slices
     slice_paths = []
-    for slice_index in range(data.shape[2]):
+    # Handle the ctp file type separately
+
+
+        # For other file types, process as before
+    for slice_index in range(data.shape[2]):  # Assuming the third dimension is the slice dimension
         slice_data = data[:, :, slice_index]
-        plt.imshow(slice_data, cmap='gray')
+        print(f"Slice index: {slice_index}, Slice shape: {slice_data.shape}")
+
+        # Check for empty slices
+        if slice_data.size == 0 or slice_data.shape[0] == 0 or slice_data.shape[1] == 0:
+            print(f"Skipping empty slice at index {slice_index}")
+            continue
+
+        # Normalize the slice data based on the file type
+        if file_type in normalization_params:
+            vmin, vmax = normalization_params[file_type]
+            slice_data = normalize(slice_data, vmin=vmin, vmax=vmax)
+
+        # Ensure the data type is appropriate for imshow
+        slice_data = slice_data.astype(np.float32)  # or np.uint8, depending on your data
+
+        # Set the colormap based on the file type
+        if file_type in ('cta', 'ctp'):
+            cmap = 'gray'
+        else:
+            cmap = 'jet'
+
+        plt.imshow(slice_data, cmap=cmap)
         plt.axis('off')
-        image_path = f'static/slice_{case_id}_{slice_index}.png'  # Unique image path for each case
+
+        # Check if the colormap is 'jet' before adding the color bar
+        if cmap == 'jet':
+            cb = plt.colorbar(fraction=0.046, pad=0.04)  # Create a color bar
+            cb.set_label("Value Scale")  # Set the label for the color bar
+
+
+        image_path = f'static/slice_{patient_name}_{file_type}_{slice_index}.png'  # Unique image path for each slice
         plt.savefig(image_path, bbox_inches='tight', pad_inches=0)
         plt.close()
         slice_paths.append(image_path)
+
+    return jsonify({'slices': slice_paths})  # Return the slice paths as JSON
+
+
+
+
+@patients_bp.route('/slices/<patient_name>/<file_type>', methods=['GET'])
+def get_slices(patient_name, file_type):
+    # Query the Patient by name
+    patient = Patient.query.filter_by(patient_name=patient_name).first()
+    if not patient:
+        return jsonify({'error': 'Patient not found'}), 404
+
+    # Get the ground truth file if it exists
+    ground_truth_file = GroundTruthFile.query.filter_by(patient_id=patient.id).first()
+
+    # Determine which file type to query based on the file_type parameter
+    file_record = None
+    if file_type == 'ctp':
+        file_record = CTPFile.query.filter_by(patient_id=patient.id).first()
+    elif file_type == 'mri':
+        file_record = MRIFile.query.filter_by(patient_id=patient.id).first()
+    elif file_type == 'mtt':
+        file_record = MTTFile.query.filter_by(patient_id=patient.id).first()
+    elif file_type == 'cbv':
+        file_record = CBVFile.query.filter_by(patient_id=patient.id).first()
+    elif file_type == 'cbf':
+        file_record = CBFFile.query.filter_by(patient_id=patient.id).first()
+    elif file_type == 'tmax':
+        file_record = TMAXFile.query.filter_by(patient_id=patient.id).first()
+    elif file_type == 'cta':
+        file_record = CTAFile.query.filter_by(patient_id=patient.id).first()
+    elif file_type == 'ground_truth':
+        file_record = ground_truth_file
+    else:
+        return jsonify({'error': 'Invalid file type'}), 400
+
+    if not file_record:
+        return jsonify({'error': f'{file_type.upper()} file not found for patient {patient_name}'}), 404
+
+        # Check if the requested file type is 'ctp'
+    if file_type != 'ctp':
+        return jsonify({'error': f'{file_type.upper()} files are not available'}), 404
+
+    # Create a temporary file to save the binary data
+    base_folder_path = os.path.join('temp_files')
+    temp_file_path = os.path.join(base_folder_path, file_record.filename)
+
+    # Save the binary data to a temporary file
+    with open(temp_file_path, 'wb') as f:
+        f.write(file_record.file_data)
+
+    # Load the NIfTI file
+    img = nib.load(temp_file_path)
+    data = img.get_fdata()
+
+    if file_type == 'ctp':
+        data = data[:, :, :, 0]  # Use the first 3D volume from the 4D data
+
+    def normalize(data, vmin=None, vmax=None):
+        if vmin is None:
+            vmin = np.min(data)
+        if vmax is None:
+            vmax = np.max(data)
+        return np.clip((data - vmin) / (vmax - vmin), 0, 1)
+
+    # Define normalization parameters for each file type
+    normalization_params = {
+        'cbf': (0, 100),
+        'cbv': (0, 5),
+        'mtt': (7, 13),
+        'tmax': (2, 10),
+        'cta': (0, 100),
+        'ctp': (0, 100)
+    }
+
+    # Generate paths for all slices
+    slice_paths = []
+
+    for slice_index in range(data.shape[2]):  # Assuming the third dimension is the slice dimension
+        slice_data = data[:, :, slice_index]
+        print(f"Slice index: {slice_index}, Slice shape: {slice_data.shape}")
+
+        # Check for empty slices
+        if slice_data.size == 0 or slice_data.shape[0] == 0 or slice_data.shape[1] == 0:
+            print(f"Skipping empty slice at index {slice_index}")
+            continue
+
+        # Normalize the slice data based on the file type
+        if file_type in normalization_params:
+            vmin, vmax = normalization_params[file_type]
+
+            slice_data = normalize(slice_data, vmin=vmin, vmax=vmax)
+        else:
+            # If no normalization parameters are defined for the file type, you can choose to skip normalization
+            print(f"No normalization parameters for file type: {file_type}")
+
+        # Ensure the data type is appropriate for imshow
+        slice_data = (slice_data * 255).astype(np.uint8)  # Convert to 8-bit grayscale
+
+        # Create the base image
+        plt.imshow(slice_data, cmap='gray')
+        plt.axis('off')
+        base_image_path = f'static/slice_{patient_name}_{file_type}_{slice_index}.png'
+        plt.savefig(base_image_path, bbox_inches='tight', pad_inches=0)
+        plt.close()
+
+        # If the file type is not ground_truth, overlay the ground truth if it exists
+        if file_type != 'ground_truth' and ground_truth_file:
+            ground_truth_temp_path = os.path.join('temp_files', ground_truth_file.filename)
+            with open(ground_truth_temp_path, 'wb') as f:
+                f.write(ground_truth_file.file_data)
+
+            ground_truth_img = nib.load(ground_truth_temp_path)
+            ground_truth_data = ground_truth_img.get_fdata()[:, :, slice_index].astype(np.float32)
+
+            # Create an overlay
+            overlay_image = Image.new('RGB', slice_data.shape[::-1])
+
+            # Convert slice_data to an image
+            base_image = Image.fromarray(slice_data).convert('RGBA')
+
+            # Create a transparent overlay
+            overlay = np.zeros((*ground_truth_data.shape, 4), dtype=np.uint8)  # (H, W, 4) for RGBA
+
+            # Set the overlay color (e.g., red with 100 alpha)
+            overlay_color = (255, 0, 0, 50)  # Semi-transparent red
+
+            # Apply the overlay only where segmentation is white
+            overlay[:, :, 3] = 0  # Ensure full transparency as default
+            overlay[ground_truth_data > 0.5] = overlay_color
+
+            # Convert overlay to an image
+            overlay_image = Image.fromarray(overlay, mode='RGBA')
+
+            combined_image = base_image.copy()
+            combined_image.paste(overlay_image, (0, 0), overlay_image)  # Ensure proper transparency
+            # Save the combined image
+            combined_image_path = f'static/slice_{patient_name}_{file_type}_overlay_{slice_index}.png'
+            combined_image.save(combined_image_path)
+
+            # Use the combined image path for the overlay
+            slice_paths.append(combined_image_path)
+        else:
+            # If it's a ground truth image, just use the base image
+            slice_paths.append(base_image_path)
 
     return jsonify({'slices': slice_paths})  # Return the slice paths as JSON
