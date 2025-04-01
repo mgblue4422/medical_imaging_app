@@ -110,14 +110,14 @@
     </div>
 
     <div class="upload-container">
-        <h2>Upload CTP or MRI images</h2>
+        <h2>Manual annotation</h2>
         <form id="upload-form" enctype="multipart/form-data">
             <div>
-                <label for="image-upload-1">Choose image 1 (CTP or MRI):</label>
+                <label for="image-upload-1">Upload CTP or MRI images:</label>
                 <input type="file" id="image-upload-1" name="image1" accept="image/*" required>
             </div>
             <div>
-                <label for="image-upload-2">Choose image (CTP or MRI):</label>
+                <label for="image-upload-2">Upload CTP or MRI images:</label>
                 <input type="file" id="image-upload-2" name="image2" accept="image/*" required>
             </div>
         </form>
@@ -290,15 +290,45 @@
             endPoint = null;
         };
 
-        // Function to save the drawing to a PNG file
+        // Function to save the drawing to a file
         const saveDrawing = () => {
             const canvasElements = document.querySelectorAll(".canvas");
             canvasElements.forEach((canvas, index) => {
-                const dataURL = canvas.toDataURL("image/png");
+                const dataURL = canvas.toDataURL();
                 const a = document.createElement("a");
                 a.href = dataURL;
-                a.download = `drawing-${index + 1}.png`;
-                a.click();
+                const fileTypes = ["png", "jpg", "jpeg", "gif", "bmp", "svg"];
+                const fileTypeSelect = document.createElement("select");
+                fileTypes.forEach((fileType) => {
+                    const option = document.createElement("option");
+                    option.value = fileType;
+                    option.textContent = fileType.toUpperCase();
+                    fileTypeSelect.appendChild(option);
+                });
+                const fileTypeLabel = document.createElement("label");
+                fileTypeLabel.textContent = "Velg filtype:";
+                fileTypeLabel.appendChild(fileTypeSelect);
+                const fileNameInput = document.createElement("input");
+                fileNameInput.type = "text";
+                fileNameInput.placeholder = "Filnavn (eks. min_bilde)";
+                const fileTypeContainer = document.createElement("div");
+                fileTypeContainer.appendChild(fileTypeLabel);
+                fileTypeContainer.appendChild(fileNameInput);
+                document.body.appendChild(fileTypeContainer);
+                const saveButton = document.createElement("button");
+                saveButton.textContent = "Lagre";
+                saveButton.addEventListener("click", () => {
+                    const selectedFileType = fileTypeSelect.value;
+                    const fileName = fileNameInput.value;
+                    if (fileName) {
+                        a.download = `${fileName}.${selectedFileType}`;
+                    } else {
+                        a.download = `drawing-${index + 1}.${selectedFileType}`;
+                    }
+                    a.click();
+                    document.body.removeChild(fileTypeContainer);
+                });
+                fileTypeContainer.appendChild(saveButton);
             });
         };
 

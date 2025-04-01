@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compare parameters</title>
+    <title>Regional Analysis</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -76,7 +76,7 @@
 <body>
     <div class="container">
         <div class="controls">
-            <h2>Compare parameters</h2>
+            <h2>Regional analysis</h2>
             <div class="dropdown-container">
                 <span class="dropdown-label">Patient Category:</span>
                 <select id="patient-category">
@@ -86,8 +86,8 @@
                 </select>
             </div>
             <div class="dropdown-container">
-                <span class="dropdown-label">Color Maps:</span>
-                <select id="color-maps">
+                <span class="dropdown-label">Prefusion -maps:</span>
+                <select id="Prefusion -maps">
                     <option value="CBF_COV">CBF_COV</option>
                     <option value="CBV_LOV">CBV_LOV</option>
                     <option value="CBF_CTH">CBF_CTH</option>
@@ -95,24 +95,32 @@
                 </select>
             </div>
             <div class="dropdown-container">
-                <span class="dropdown-label">XD:</span>
+                <span class="dropdown-label">Dimensionality:</span>
                 <select id="xd">
                     <option value="3D">3D</option>
                     <option value="2D">2D</option>
+                    <option value="Both">Both</option>
                 </select>
             </div>
             <div class="dropdown-container">
-                <span class="dropdown-label">Image 1:</span>
-                <select id="image-1-type">
-                    <option value="Treated">Treated</option>
-                    <option value="Non-Treated">Non-Treated</option>
-                </select>
-            </div>
-            <div class="dropdown-container">
-                <span class="dropdown-label">Image 2:</span>
+                <span class="dropdown-label">Region:</span>
                 <select id="image-2-type">
-                    <option value="Treated">Treated</option>
-                    <option value="Non-Treated">Non-Treated</option>
+                    <option value="Treated">Hypoperfused region</option>
+                    <option value="Non-Treated">Final infarct region</option>
+                </select>
+            </div>
+            <div class="dropdown-container">
+                <span class="dropdown-label">Figure  1:</span>
+                <select id="image-1-type">
+                    <option value="Treated">Recanalized</option>
+                    <option value="Non-Treated">Non-Recanalized</option>
+                </select>
+            </div>
+            <div class="dropdown-container">
+                <span class="dropdown-label">Figure 2:</span>
+                <select id="image-2-type">
+                    <option value="Recanalized">Recanalized</option>
+                    <option value="Non-Treated">Non-Recanalized</option>
                 </select>
             </div>
             <div class="button-container">
@@ -122,11 +130,11 @@
         </div>
         <div class="image-preview-container">
             <div class="image-container">
-                <h3>Image 1</h3>
+                <h3>Figure 1</h3>
                 <img id="image-1" alt="Preview" style="display:block;">
             </div>
             <div class="image-container">
-                <h3>Image 2</h3>
+                <h3>Figure 2</h3>
                 <img id="image-2" alt="Preview" style="display:block;">
             </div>
         </div>
@@ -149,7 +157,7 @@
             const image1Type = document.getElementById("image-1-type").value;
             const image2Type = document.getElementById("image-2-type").value;
             console.log(`Patient Category: ${patientCategory}, Color Maps: ${colorMaps}, XD: ${xd}, Bilde 1: ${image1Type}, Bilde 2: ${image2Type}`);
-            // Her kan du legge til kode for å visualisere bildene basert på valgene
+            //
         });
     </script>
 </body>
