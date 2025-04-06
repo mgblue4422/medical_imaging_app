@@ -74,91 +74,123 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="controls">
-            <h2>Regional analysis</h2>
-            <div class="dropdown-container">
-                <span class="dropdown-label">Patient Category:</span>
-                <select id="patient-category">
-                    <option value="LVO">LVO</option>
-                    <option value="ALL">ALL</option>
-                    <option value="NON_LVO">NON_LVO</option>
-                </select>
-            </div>
-            <div class="dropdown-container">
-                <span class="dropdown-label">Prefusion -maps:</span>
-                <select id="Prefusion -maps">
-                    <option value="CBF_COV">CBF_COV</option>
-                    <option value="CBV_LOV">CBV_LOV</option>
-                    <option value="CBF_CTH">CBF_CTH</option>
-                    <option value="CBV_LTH">CBV_LTH</option>
-                </select>
-            </div>
-            <div class="dropdown-container">
-                <span class="dropdown-label">Dimensionality:</span>
-                <select id="xd">
-                    <option value="3D">3D</option>
-                    <option value="2D">2D</option>
-                    <option value="Both">Both</option>
-                </select>
-            </div>
-            <div class="dropdown-container">
-                <span class="dropdown-label">Region:</span>
-                <select id="image-2-type">
-                    <option value="Treated">Hypoperfused region</option>
-                    <option value="Non-Treated">Final infarct region</option>
-                </select>
-            </div>
-            <div class="dropdown-container">
-                <span class="dropdown-label">Figure  1:</span>
-                <select id="image-1-type">
-                    <option value="Treated">Recanalized</option>
-                    <option value="Non-Treated">Non-Recanalized</option>
-                </select>
-            </div>
-            <div class="dropdown-container">
-                <span class="dropdown-label">Figure 2:</span>
-                <select id="image-2-type">
-                    <option value="Recanalized">Recanalized</option>
-                    <option value="Non-Treated">Non-Recanalized</option>
-                </select>
-            </div>
-            <div class="button-container">
-                <button id="visualize-button">Visualize</button>
-
-            </div>
+   <div class="container">
+    <div class="controls">
+        <h2>Regional analysis</h2>
+        <div class="dropdown-container">
+            <span class="dropdown-label">Patient Category:</span>
+            <select id="patient-category">
+                <option value="LVO">LVO</option>
+                <option value="ALL">ALL</option>
+                <option value="NON_LVO">NON_LVO</option>
+            </select>
         </div>
-        <div class="image-preview-container">
-            <div class="image-container">
-                <h3>Figure 1</h3>
-                <img id="image-1" alt="Preview" style="display:block;">
-            </div>
-            <div class="image-container">
-                <h3>Figure 2</h3>
-                <img id="image-2" alt="Preview" style="display:block;">
-            </div>
+        <div class="dropdown-container">
+            <span class="dropdown-label">Value 1:</span>
+            <select id="value1">
+                <option value="MTT">MTT</option>
+                <option value="COV">COV</option>
+                <option value="CTH">CTH</option>
+                <option value="TTP">TTP</option>
+                <!-- Add more options as needed -->
+            </select>
+        </div>
+        <div class="dropdown-container">
+            <span class="dropdown-label">Value 2:</span>
+            <select id="value2">
+                <option value="MTT">MTT</option>
+                <option value="COV">COV</option>
+                <option value="CTH">CTH</option>
+                <option value="TTP">TTP</option>
+                <!-- Add more options as needed -->
+            </select>
+        </div>
+        <div class="dropdown-container">
+            <span class="dropdown-label">Dimensionality:</span>
+            <select id="dimensionality">
+                <option value="3D">3D</option>
+                <option value="2D">2D</option>
+            </select>
+        </div>
+        <div class="dropdown-container" id="recanalized-container" style="display: none;">
+            <span class="dropdown-label">Figure 1:</span>
+            <select id="figure-1-type">
+                <option value="Recanalized">Recanalized</option>
+                <option value="Non-Treated">Non-Recanalized</option>
+            </select>
+        </div>
+        <div class="dropdown-container" id="figure-1-container">
+            <span class="dropdown-label">Figure 1:</span>
+            <select id="figure-1-type">
+                <option value="Non-Treated">Non-Recanalized</option>
+            </select>
+        </div>
+        <div class="dropdown-container" id="figure-2-container">
+            <span class="dropdown-label">Figure 2:</span>
+            <select id="figure-2-type">
+                <option value="Non-Treated">Non-Recanalized</option>
+            </select>
+        </div>
+        <div class="button-container">
+            <button id="visualize-button">Visualize</button>
         </div>
     </div>
-    <script>
-        document.querySelectorAll(".image-container img").forEach(img => {
-            img.addEventListener("dblclick", function() {
-                if (this.style.transform === "scale(2)") {
-                    this.style.transform = "scale(1)";
-                } else {
-                    this.style.transform = "scale(2)";
-                }
-            });
+    <div class="image-preview-container">
+        <div class="image-container">
+            <h3>Figure 1</h3>
+            <img id="image-1" alt="Preview" style="display:block;">
+        </div>
+        <div class="image-container">
+            <h3>Figure 2</h3>
+            <img id="image-2" alt="Preview" style="display:block;">
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById("visualize-button").addEventListener("click", function() {
+    const patientCategory = document.getElementById("patient-category").value;
+    const value1 = document.getElementById("value1").value; // Updated ID for Value 1
+    const value2 = document.getElementById("value2").value; // Updated ID for Value 2
+    const dimension = document.getElementById("dimensionality").value; // Updated ID for Dimension
+
+    console.log(`Patient Category: ${patientCategory}, Value 1: ${value1}, Value 2: ${value2}, Dimension: ${dimension}`);
+
+    // Fetch image for Image 1
+    fetch(`/get_image?patient_category=${patientCategory}&value1=${value1}&value2=${value2}&dimension=${dimension}`)
+        .then(response => {
+            if (response.ok) {
+                return response.blob();
+            }
+            throw new Error('Image not found');
+        })
+        .then(imageBlob => {
+            const imageObjectURL = URL.createObjectURL(imageBlob);
+            document.getElementById("image-1").src = imageObjectURL;
+        })
+        .catch(error => {
+            console.error(error);
         });
 
-        document.getElementById("visualize-button").addEventListener("click", function() {
-            const patientCategory = document.getElementById("patient-category").value;
-            const colorMaps = document.getElementById("color-maps").value;
-            const xd = document.getElementById("xd").value;
-            const image1Type = document.getElementById("image-1-type").value;
-            const image2Type = document.getElementById("image-2-type").value;
-            console.log(`Patient Category: ${patientCategory}, Color Maps: ${colorMaps}, XD: ${xd}, Bilde 1: ${image1Type}, Bilde 2: ${image2Type}`);
-            //
-        });
-    </script>
+    // Fetch image for Image 2 (if needed, you can duplicate the fetch logic for a second image)
+    // If you want to fetch a different image for Figure 2, you can modify the fetch URL accordingly.
+});
+
+
+document.getElementById("patient-category").addEventListener("change", function() {
+    const selectedCategory = this.value;
+    const recanalizedContainer = document.getElementById("recanalized-container");
+    const figure1Container = document.getElementById("figure-1-container");
+    const figure2Container = document.getElementById("figure-2-container");
+
+    if (selectedCategory === "LVO") {
+        recanalizedContainer.style.display = "block"; // Show recanalized options
+        figure1Container.style.display = "none"; // Hide non-recanalized options
+        figure2Container.style.display = "none"; // Hide non-recanalized options
+    } else {
+        recanalizedContainer.style.display = "none"; // Hide recanalized options
+        figure1Container.style.display = "block"; // Show non-recan
+
+</script>
 </body>
 </html>

@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for ,jsonif
 from decorators import login_required
 from db1 import db1  # Adjust the import based on your project structure
 #from patientsdatabase2 import StrokeCase , Session, NiiFile # Adjust the import based on your project structure
-from patientdatabase5 import Patient ,CTAFile, CBFFile ,CBVFile ,CTPFile ,MRIFile  ,MTTFile , TMAXFile , GroundTruthFile ,DoctorNote
+from patientdatabase import Patient ,CTAFile, CBFFile ,CBVFile ,CTPFile ,MRIFile  ,MTTFile , TMAXFile , GroundTruthFile ,DoctorNote
 import nibabel as nib  # Add this line
 import matplotlib.pyplot as plt
 import numpy as np
@@ -146,18 +146,12 @@ def get_slices2(patient_name, file_type):
 
     if not file_record:
         return jsonify({'error': f'{file_type.upper()} file not found for patient {patient_name}'}), 404
-
-    # Create a temporary file to save the binary data
-    base_folder_path = os.path.join('temp_files')
-    temp_file_path = os.path.join(base_folder_path, file_record.filename)
-
-    # Save the binary data to a temporary file
-    with open(temp_file_path, 'wb') as f:
-        f.write(file_record.file_data)
+    # Use the file path directly from the file_record
+    file_path = file_record.file_path
 
     # Load the NIfTI file
-    img = nib.load(temp_file_path)
-    data = img.get_fdata()
+    img = nib.load(file_path)
+    data = img.get_fdata()  # Load the data from the NIfTI file
 
     if file_type == 'ctp':
         data = data[:, :, :, 0]  # Use the first 3D volume from the 4D data
@@ -269,17 +263,12 @@ def get_slices(patient_name, file_type):
     if file_type != 'ctp':
         return jsonify({'error': f'{file_type.upper()} files are not available'}), 404
 
-    # Create a temporary file to save the binary data
-    base_folder_path = os.path.join('temp_files')
-    temp_file_path = os.path.join(base_folder_path, file_record.filename)
-
-    # Save the binary data to a temporary file
-    with open(temp_file_path, 'wb') as f:
-        f.write(file_record.file_data)
+    # Use the file path directly from the file_record
+    file_path = file_record.file_path
 
     # Load the NIfTI file
-    img = nib.load(temp_file_path)
-    data = img.get_fdata()
+    img = nib.load(file_path)
+    data = img.get_fdata()  # Load the data from the NIfTI file
 
     if file_type == 'ctp':
         data = data[:, :, :, 0]  # Use the first 3D volume from the 4D data

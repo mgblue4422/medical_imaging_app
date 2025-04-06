@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify, session
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session, send_file
 from patients import patients_bp  # Import the patients blueprint
 from functools import wraps
 from flask_sqlalchemy import SQLAlchemy
@@ -9,9 +9,10 @@ from wtforms.validators import InputRequired, Length, ValidationError
 from flask_bcrypt import Bcrypt
 from db1 import db1
 from flask_migrate import Migrate
-from patientdatabase5 import *
+from patientdatabase import *
 from syntheticdata import syntheticdata
-
+from analysisdatabase import HistogramImageModel
+import io
 
 app = Flask(__name__)
 
@@ -153,7 +154,7 @@ def section(section_name):
     elif section_name == 'syntheticdata':
 
 
-            return redirect(url_for('syntheticdata.syntheticdata'))  # Redirect to the patients blueprint
+            return redirect(url_for('syntheticdata.syntheticdatapage'))  # Redirect to the synthetic blue print
 
 
 
@@ -186,5 +187,29 @@ def zoom_1():
 def phd_graph():
     return render_template('Phdgraph.html')
 
+
+@app.route('/get_image', methods=['GET'])
+def get_image():
+    patient_category = request.args.get('patient_category')  # e.g., 'LVO', 'NonLVO', 'All'
+    value1 = request.args.get('value1')  # First value being plotted
+    value2 = request.args.get('value2')  # Second value being plotted
+    dimension = request.args.get('dimension')  # e.g., '2D' or '3D'
+
+    print(f"Received parameters: patient_category={patient_category}, value1={value1}, value2={value2}, dimension={dimension}")
+
+    # Query the database for the image based on the parameters
+    image = HistogramImageModel.query.filter_by(
+        category=patient_category,
+        value1=value1,
+        value2=value2,
+        dimension=dimension
+    ).first()
+
+    if image:
+        print(f"Found image: {image.filename}")
+        return send_file(io.BytesIO(image.image_data), mimetype='image/png', as_attachment=False)
+
+    print("No image found.")
+    return jsonify({'error': 'Image not found'}), 404
 if __name__ == '__main__':
     app.run(debug=True)

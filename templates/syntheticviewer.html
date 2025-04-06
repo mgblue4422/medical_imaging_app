@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Medical Case Dashboard</title>
+    <title>Sythetic  Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;700&display=swap" rel="stylesheet">
     <style>
         /* Existed styles from your first code THIS IS THE MAIN DASHBOARD*/
@@ -174,58 +174,32 @@
 <body>
     <div class="container">
         <div class="header">
-            Medical Case Dashboard
+            Synthetic Image Dashboard
             <button id="toggle-sidebar" style="margin-left: 10px; background-color: #6db3f2; border: none; color: white; padding: 0.8em; border-radius: 5px; cursor: pointer;">Toggle Sidebar</button>
         </div>
         <div class="content">
             <div class="sidebar">
                 <ul>
-                    <li data-feature="case-analysis">Case Analysis</li>
-                    <li data-feature="patient-info">Patient Information</li>
-                    <li data-feature="doctor-notes">Doctor's Notes</li>
-                    <li data-feature="Segmentation">Segmentation</li>
+
+                    <li data-feature="Segmentation">Images</li>
 
 
                 </ul>
             </div>
             <div class="main">
-                <!-- Case Analysis with File Upload - First Section -->
-                <div id="case-analysis" class="feature-content active">
-                    <h3>Case Analysis</h3>
-                    <div class="file-upload-container">
-                        <p><strong>Select Files to Upload</strong></p>
-                        <input type="file" id="file-upload" multiple>
-                    </div>
-                    <div id="file-header"></div>
-                    <div id="uploaded-files"></div>
-                    <div id="analysis-results"></div>
-                </div>
 
                 <!-- Segmentation Section -->
 
                 <div id="Segmentation" class="feature-content">
-    <h3>Segmentation</h3>
-    <label for="file-type-select">Select File Type:</label>
-    <select id="file-type-select">
-        <option value="ctp">CTP</option>
-        <option value="cta">CTA</option>
-        <option value="ground_truth">Ground Truth</option>
-    </select>
-    <input type="file" id="segmentation-file-upload" multiple>
-                    <!-- Toggle Button -->
-    <button id="toggle-overlay" style="margin: 10px; background-color: #6db3f2; color: white; border: none; padding: 0.8em; border-radius: 5px; cursor: pointer;">Overlay: Off</button>
-                    <!-- Show/Hide Second Carousel Checkbox -->
-    <label for="toggle-carousel">Show Perfusion Maps:</label>
+    <h3>Images</h3>
+
+
+               <!-- Show/Hide Second Carousel Checkbox -->
+    <label for="toggle-carousel">Show Real images:</label>
     <input type="checkbox" id="toggle-carousel">
                     <label for="sync-carousels">Sync Carousels:</label>
 <input type="checkbox" id="sync-carousels" checked>
                     <!-- Overlay Selection Button -->
-<label for="overlay-select">Choose Overlay:</label>
-<select id="overlay-select" style="margin: 10px; padding: 0.5em; border-radius: 5px;">
-    <option value="ground_truth">Ground Truth</option>
-    <option value="manual_segmentation" disabled>Manual Segmentation</option>
-    <option value="automatic_segmentation" disabled>Automatic Segmentation</option>
-</select>
 
     <!-- First Carousel -->
     <div class="carousel-container">
@@ -241,15 +215,8 @@
     <!-- Second Carousel -->
     <div class="carousel-container" id="second-carousel">
         <div class="carousel-title">
-        <h3>Perfusion maps</h3> <!-- Title for the second carousel -->
-            <label for="file-type-select-2" style="margin-left: 50px;">Select File Type:</label>
-        <select id="file-type-select-2"style="margin-left: 50px;">
-            <option value="cbv">CBV</option>
-            <option value="mtt">MTT</option>
-            <option value="tmax">TMAX</option>
-            <option value="cbf">CBF</option>
+        <h3>Real ctp </h3> <!-- Title for the second carousel -->
 
-        </select>
     </div>
 
 
@@ -265,29 +232,8 @@
 
 
 
-                <!-- Other Sections -->
-               <div id="patient-info" class="feature-content">
-    <div class="note-box">
-        <label><strong>Name:</strong> <input type="text" id="patient-name" value="{{ patient_name }}" readonly></label><br><br>
-        <label><strong>Medical History / Notes:</strong></label><br>
-        <textarea id="patient-history" readonly>XXX</textarea><br><br>
 
-        <label><strong>CSV Data:</strong></label><br>
-        {% for filename, table in csv_data.items() %}
-            <h5>{{ filename }}</h5>
-            <div>{{ table|safe }}</div>  <!-- Render the HTML table -->
-        {% endfor %}
 
-        <button id="save-patient-info" style="background-color: #6db3f2; color: white; border: none; padding: 0.8em; border-radius: 5px; cursor: pointer;">Save</button>
-    </div>
-</div>
-                <div id="doctor-notes" class="feature-content">
-                    <h3>Doctor's Notes</h3>
-                    <div class="note-box">
-                        <textarea id="doctor-notes-text" placeholder="Enter notes here..."></textarea>
-                    </div>
-                    <button id="save-doctor-notes" style="background-color: #6db3f2; color: white; border: none; padding: 0.8em; border-radius: 5px; cursor: pointer;">Save</button>
-                </div>
 
             </div>
         </div>
@@ -315,23 +261,6 @@
                 }
             });
         });
-document.getElementById('save-doctor-notes').addEventListener('click', async () => {
-    const notes = document.getElementById('doctor-notes-text').value;
-
-    const response = await fetch(`http://127.0.0.1:5000/patients/${patientName}/save_notes`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ notes }),
-    });
-
-    if (response.ok) {
-        alert('Doctor\'s notes saved successfully.');
-    } else {
-        alert('Failed to save doctor\'s notes.');
-    }
-});
 
 // Get references to the necessary DOM elements for both carousels
 const segmentationFileUpload = document.getElementById('segmentation-file-upload');
@@ -343,24 +272,24 @@ const prevBtn2 = document.getElementById('prev2');
 const nextBtn2 = document.getElementById('next2');
 const imageCounter1 = document.getElementById('image-counter1');
 const imageCounter2 = document.getElementById('image-counter2');
-const fileTypeSelect = document.getElementById('file-type-select'); // Reference to the file type dropdown
 
 let images1 = [];
 let images2 = [];
 let currentIndex1 = 0;
 let currentIndex2 = 0;
 
-const patientName = {{ patient_name | tojson }};
-
-// Get reference to the toggle button
-const toggleOverlayButton = document.getElementById('toggle-overlay');
-let isOverlayEnabled = false; // State to track if overlay is enabled
+ const patientName = {{ case_id | tojson }};
 
 
 // Function to fetch slices based on overlay state
-async function fetchSlices(fileType, isSecondCarousel = false) {
-    const endpoint = isSecondCarousel ? 'slices2' : (isOverlayEnabled ? 'slices' : 'slices2'); // Choose the endpoint based on the carousel
-    const response = await fetch(`http://127.0.0.1:5000/patients/${endpoint}/${patientName}/${fileType}`);
+async function fetchSlices(isSecondCarousel = false) {
+     // Define the URLs for each carousel
+    const url = isSecondCarousel
+        ? `http://127.0.0.1:5000/patients/slices2/sub-stroke0150/ctp`
+        : `http://127.0.0.1:5000/syntheticdata/tiff_slices/${patientName}`;
+
+    const response = await fetch(url);
+
     if (!response.ok) {
         console.error('Failed to fetch slices:', response.statusText);
         return [];
@@ -372,18 +301,10 @@ async function fetchSlices(fileType, isSecondCarousel = false) {
 
 // Initialize both carousels based on the selected file type
 async function initializeCarousels() {
-    const fileType = fileTypeSelect.value; // Get the selected file type
-    const fileType2 = fileTypeSelect2.value; // Get the selected file type
 
-    // Check if overlay is enabled and file type is not "CTP"
-    if (isOverlayEnabled && fileType !== 'ctp') {
-        alert('Overlay is only available for CTP file type.'); // Display alert
-        isOverlayEnabled = false; // Reset overlay state
-        toggleOverlayButton.textContent = 'Overlay: Off'; // Update button text
-    }
 
-    images1 = await fetchSlices(fileType); // Fetch for the first carousel (with overlay logic)
-    images2 = await fetchSlices(fileType2, true); // Fetch for the second carousel (without overlay)
+    images1 = await fetchSlices(); // Fetch for the first carousel (with overlay logic)
+    images2 = await fetchSlices( true); // Fetch for the second carousel (without overlay)
     currentIndex1 = 0;
     currentIndex2 = 0;
     displayImages(carousel1, imageCounter1, images1, currentIndex1);
@@ -391,28 +312,8 @@ async function initializeCarousels() {
 }
 
 
-// Event listener for the toggle button
-toggleOverlayButton.addEventListener('click', () => {
-    isOverlayEnabled = !isOverlayEnabled; // Toggle the overlay state
-    toggleOverlayButton.textContent = `Overlay: ${isOverlayEnabled ? 'On' : 'Off'}`; // Update button text
-    initializeCarousels(); // Re-initialize the first carousel with the new overlay state
-});
 
-// Event listener for file type selection
-fileTypeSelect.addEventListener('change', () => {
-    initializeCarousels(); // Re-initialize both carousels when the file type changes
-});
 
-// File upload event listener
-segmentationFileUpload.addEventListener('change', (event) => {
-    images1 = Array.from(event.target.files);
-    images2 = [...images1]; // Duplicate images for the second carousel
-    currentIndex1 = 0;
-    currentIndex2 = 0;
-
-    displayImages(carousel1, imageCounter1, images1, currentIndex1);
-    displayImages(carousel2, imageCounter2, images2, currentIndex2);
-});
 
 // Function to display images in the carousel
 function displayImages(carousel, imageCounter, images, currentIndex) {
@@ -425,7 +326,8 @@ function displayImages(carousel, imageCounter, images, currentIndex) {
         const img = document.createElement('img');
         const label = document.createElement('div');
 
-        img.src = `http://127.0.0.1:5000/${images[index]}`; // Adjust this if needed
+        img.src = `http://127.0.0.1:5000/syntheticdata/${images[index]}`; // Include the blueprint name
+
         console.log('Displaying image:', img.src); // Log the image source
         label.textContent = `Image ${index + 1}`;
         label.classList.add('image-label');
@@ -496,15 +398,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
-
-
-
-// Initialize the carousels for the default file type on page load
-document.addEventListener('DOMContentLoaded', () => {
-    initializeCarousels(); // Initialize with the default file type
-});
 document.addEventListener('DOMContentLoaded', () => {
         const toggleCarouselCheckbox = document.getElementById('toggle-carousel');
         const secondCarouselContainer = document.getElementById('second-carousel'); // Use ID to target
@@ -522,16 +415,7 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleSecondCarousel(); // Call to set the initial state
     });
 
-        // Event listener for file type selection for the first carousel
-fileTypeSelect.addEventListener('change', () => {
-    initializeCarousels(); // Re-initialize both carousels when the file type changes
-});
 
-// Event listener for file type selection for the second carousel
-const fileTypeSelect2 = document.getElementById('file-type-select-2');
-fileTypeSelect2.addEventListener('change', () => {
-    initializeCarousels(); // Re-initialize the second carousel when the file type changes
-});
 
     </script>
 </body>
