@@ -87,7 +87,11 @@ Instructions:
 
 ---
 
-## Step 7: Run the Application
+## Step 7: Update login.py and run the application
+
+update the following line to the appropriate database location 
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Volumes/Seagate Bac/Thesis project 2025/database.db'
 
 To run the application, execute the `login.py` script:
 
