@@ -306,17 +306,17 @@
                     fileTypeSelect.appendChild(option);
                 });
                 const fileTypeLabel = document.createElement("label");
-                fileTypeLabel.textContent = "Velg filtype:";
+                fileTypeLabel.textContent = "Choose datatype:";
                 fileTypeLabel.appendChild(fileTypeSelect);
                 const fileNameInput = document.createElement("input");
                 fileNameInput.type = "text";
-                fileNameInput.placeholder = "Filnavn (eks. min_bilde)";
+                fileNameInput.placeholder = "Filename (eks. min_bilde)";
                 const fileTypeContainer = document.createElement("div");
                 fileTypeContainer.appendChild(fileTypeLabel);
                 fileTypeContainer.appendChild(fileNameInput);
                 document.body.appendChild(fileTypeContainer);
                 const saveButton = document.createElement("button");
-                saveButton.textContent = "Lagre";
+                saveButton.textContent = "Save";
                 saveButton.addEventListener("click", () => {
                     const selectedFileType = fileTypeSelect.value;
                     const fileName = fileNameInput.value;
