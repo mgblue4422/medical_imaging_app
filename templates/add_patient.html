@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Patient Data</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-5">Add Patient Data</h1>
+        <form method="POST" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+            <div class="form-group">
+                {{ form.patient_name.label(class="form-label") }}
+                {{ form.patient_name(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.csv_file.label(class="form-label") }}
+                {{ form.csv_file(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.ctp_file.label(class="form-label") }}
+                {{ form.ctp_file(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.mri_file.label(class="form-label") }}
+                {{ form.mri_file(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.mtt_file.label(class="form-label") }}
+                {{ form.mtt_file(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.cbv_file.label(class="form-label") }}
+                {{ form.cbv_file(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.cbf_file.label(class="form-label") }}
+                {{ form.cbf_file(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.tmax_file.label(class="form-label") }}
+                {{ form.tmax_file(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.ground_truth_file.label(class="form-label") }}
+                {{ form.ground_truth_file(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+        </form>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="alert alert-success">
+                    {{ messages[0] }}
+                </div>
+            {% endif %}
+        {% endwith %}
+    </div>
+</body>
+</html>

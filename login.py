@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify, session, send_file
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session, send_file, flash
 from patients import patients_bp  # Import the patients blueprint
 from functools import wraps
 from flask_sqlalchemy import SQLAlchemy
@@ -12,6 +12,8 @@ from flask_migrate import Migrate
 from patientdatabase import *
 from syntheticdata import syntheticdata
 from analysisdatabase import HistogramImageModel
+from forms import PatientForm
+
 import io
 
 app = Flask(__name__)
@@ -25,6 +27,19 @@ migrate = Migrate(app, db1)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+
+
+# Get the directory of the current file (this file)
+basedir = os.path.abspath(os.path.dirname(__file__))
+
+# Define the upload folder path relative to the application directory
+BASE_FOLDER_PATH = os.path.join(basedir, 'uploads')  # 'uploads' is a subdirectory
+
+# Create the uploads directory if it doesn't exist
+if not os.path.exists(BASE_FOLDER_PATH):
+    os.makedirs(BASE_FOLDER_PATH)
+
+app.config['UPLOAD_FOLDER'] = BASE_FOLDER_PATH
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -209,7 +224,86 @@ def get_image():
         print(f"Found image: {image.filename}")
         return send_file(io.BytesIO(image.image_data), mimetype='image/png', as_attachment=False)
 
-    print("No image found.")
+    # If no image found, switch value1 and value2 and query again
+    print("No image found, switching value1 and value2.")
+    image = HistogramImageModel.query.filter_by(
+        category=patient_category,
+        value1=value2,
+        value2=value1,
+        dimension=dimension
+    ).first()
+
+    if image:
+        print(f"Found image after switching: {image.filename}")
+        return send_file(io.BytesIO(image.image_data), mimetype='image/png', as_attachment=False)
+
+    print("No image found after switching values.")
     return jsonify({'error': 'Image not found'}), 404
+
+
+
+
+@app.route('/add_patient', methods=['GET', 'POST'])
+def add_patient():
+    form = PatientForm()
+    if form.validate_on_submit():
+        patient_name = form.patient_name.data
+        patient = Patient(patient_name=patient_name)
+        db1.session.add(patient)
+        db1.session.commit()
+
+        # Handle CSV file
+        if form.csv_file.data:  # Check if a CSV file has been uploaded
+            csv_file = form.csv_file.data  # Get the uploaded file object
+            new_csv = CSVFile(filename=csv_file.filename, patient_id=patient.id,
+                              file_data=csv_file.read())  # Create a new CSVFile object with filename, patient ID, and file data
+
+            # Add the new CSVFile object to the session and commit
+            db1.session.add(new_csv)  # Add the new_csv object to the database session
+            db1.session.commit()  # Commit the session to save the new_csv object to the database
+
+            # Define the target path for the CSV file
+            csv_file_path = os.path.join(BASE_FOLDER_PATH,
+                                         csv_file.filename)  # Create a file path for saving the uploaded file on the file system
+            # Save the file to the target path (optional, if you want to keep a copy on the file system)
+            csv_file.save(csv_file_path)  # Save the uploaded file to the specified path on the file system
+
+        # Handle other files
+        file_types = {
+            'ctp_file': CTPFile,
+            'mri_file': MRIFile,
+            'mtt_file': MTTFile,
+            'cbv_file': CBVFile,
+            'cbf_file': CBFFile,
+            'tmax_file': TMAXFile,
+            'ground_truth_file': GroundTruthFile
+        }
+
+        for field_name, model in file_types.items():
+            file = getattr(form, field_name).data
+            if file:
+                # Define the target path for the file
+                file_path = os.path.join(BASE_FOLDER_PATH, file.filename)
+
+                # Save the file to the target path
+                file.save(file_path)
+
+                # Create a new instance of the corresponding model
+                new_file = model(filename=file.filename, patient_id=patient.id, file_path=file_path)
+                db1.session.add(new_file)
+
+                # Commit the session to save the record in the database
+                try:
+                    db1.session.commit()
+                except Exception as e:
+                    print(f"Error committing to the database: {e}")
+                    db1.session.rollback()  # Rollback in case of error
+
+        flash('Patient data added successfully!', 'success')
+        return redirect(url_for('add_patient'))
+
+    return render_template('add_patient.html', form=form)
+
+
 if __name__ == '__main__':
     app.run(debug=True)

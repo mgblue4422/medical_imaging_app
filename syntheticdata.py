@@ -57,7 +57,7 @@ def stroke_case(case_id):
     case = ImageModel.query.filter_by(synthetic_patient_id=case_id).first_or_404()  # Fetch the synthetic case by ID
 
 
-    return render_template('syntheticviewer.html', case=case,  case_id = case_id)  # Pass the case to the template
+    return render_template('syntheticviewer1.html', case=case,  case_id = case_id)  # Pass the case to the template
 
 
 
@@ -65,8 +65,8 @@ def stroke_case(case_id):
 def get_tiff_slices(synthetic_patient_id):
     print(f"Received request for patient ID: {synthetic_patient_id}")
 
-    image_records = ImageModel.query.filter_by(synthetic_patient_id=synthetic_patient_id).all()
-    if not image_records:
+    image_record = ImageModel.query.filter_by(synthetic_patient_id=synthetic_patient_id).first()
+    if not image_record:
         return jsonify({'error': 'No images found for the specified synthetic patient ID'}), 404
 
     base_folder_path = os.path.join('temp_files')
@@ -74,31 +74,31 @@ def get_tiff_slices(synthetic_patient_id):
 
     slice_paths = []
 
-    for image_record in image_records:
-        file_path = image_record.file_path  # Get the file path from the database
-        print(f"Processing file: {file_path}")
+    #for image_record in image_records:
+    file_path = image_record.file_path  # Get the file path from the database
+    print(f"Processing file: {file_path}")
 
-        # Open the TIFF image from the file path
-        img = Image.open(file_path)
+    # Open the TIFF image from the file path
+    img = Image.open(file_path)
 
-        # Check the number of frames in the TIFF image
-        num_frames = img.n_frames
-        print(f"Number of frames (slices): {num_frames}")
+    # Check the number of frames in the TIFF image
+    num_frames = img.n_frames
+    print(f"Number of frames (slices): {num_frames}")
 
-        for slice_index in range(num_frames):
-            img.seek(slice_index)  # Move to the desired frame
-            slice_data = np.array(img)  # Convert the current frame to a NumPy array
+    for slice_index in range(num_frames):
+        img.seek(slice_index)  # Move to the desired frame
+        slice_data = np.array(img)  # Convert the current frame to a NumPy array
 
-            print(f"Slice {slice_index} shape: {slice_data.shape}")  # Print the shape of the slice
+        print(f"Slice {slice_index} shape: {slice_data.shape}")  # Print the shape of the slice
 
-            # Save the slice as a JPEG
-            slice_filename = os.path.join(base_folder_path, f'slice_{synthetic_patient_id}_{slice_index}.jpg')
-            Image.fromarray(slice_data).convert('RGB').save(slice_filename, 'JPEG')  # Convert to RGB before saving as JPEG
-            slice_paths.append(slice_filename)
+        # Save the slice as a JPEG
+        slice_filename = os.path.join(base_folder_path, f'slice_{synthetic_patient_id}_{slice_index}.jpg')
+        Image.fromarray(slice_data).convert('RGB').save(slice_filename, 'JPEG')  # Convert to RGB before saving as JPEG
+        slice_paths.append(slice_filename)
 
-            if os.path.exists(slice_filename):
-                print(f"Successfully saved: {slice_filename}")
-            else:
-                print(f"Failed to save: {slice_filename}")
+        if os.path.exists(slice_filename):
+            print(f"Successfully saved: {slice_filename}")
+        else:
+            print(f"Failed to save: {slice_filename}")
 
     return jsonify({'slices': slice_paths})  # Return the slice paths as JSON

@@ -71,70 +71,120 @@
         .button-container button:hover {
             background-color: #ff1493;
         }
+        .hidden {
+    display: none; /* Class to hide elements */
+}
+.enlarged {
+    transform: scale(1.5); /* Scale up the images */
+    transition: transform 0.3s ease; /* Smooth transition */
+}
+
     </style>
 </head>
 <body>
    <div class="container">
     <div class="controls">
         <h2>Regional analysis</h2>
+
+        <!-- Controls for Figure 1 -->
         <div class="dropdown-container">
-            <span class="dropdown-label">Patient Category:</span>
-            <select id="patient-category">
+            <span class="dropdown-label">Patient Category (Figure 1):</span>
+            <select id="patient-category-1">
                 <option value="LVO">LVO</option>
                 <option value="ALL">ALL</option>
                 <option value="NON_LVO">NON_LVO</option>
             </select>
         </div>
         <div class="dropdown-container">
-            <span class="dropdown-label">Value 1:</span>
-            <select id="value1">
+            <span class="dropdown-label">Value 1 (Figure 1):</span>
+            <select id="value1-1">
                 <option value="MTT">MTT</option>
                 <option value="COV">COV</option>
                 <option value="CTH">CTH</option>
                 <option value="TTP">TTP</option>
-                <!-- Add more options as needed -->
+                <option value="CBF">CBF</option>
+                <option value="TMAX">TMAX</option>
             </select>
         </div>
         <div class="dropdown-container">
-            <span class="dropdown-label">Value 2:</span>
-            <select id="value2">
+            <span class="dropdown-label">Value 2 (Figure 1):</span>
+            <select id="value2-1">
                 <option value="MTT">MTT</option>
                 <option value="COV">COV</option>
                 <option value="CTH">CTH</option>
                 <option value="TTP">TTP</option>
-                <!-- Add more options as needed -->
+                <option value="CBF">CBF</option>
+                <option value="TMAX">TMAX</option>
             </select>
         </div>
         <div class="dropdown-container">
-            <span class="dropdown-label">Dimensionality:</span>
-            <select id="dimensionality">
+            <span class="dropdown-label">Dimensionality (Figure 1):</span>
+            <select id="dimensionality-1">
                 <option value="3D">3D</option>
                 <option value="2D">2D</option>
             </select>
         </div>
-        <div class="dropdown-container" id="recanalized-container" style="display: none;">
-            <span class="dropdown-label">Figure 1:</span>
+        <div class="dropdown-container">
+            <span class="dropdown-label">Figure 1 Type:</span>
             <select id="figure-1-type">
                 <option value="Recanalized">Recanalized</option>
                 <option value="Non-Treated">Non-Recanalized</option>
             </select>
         </div>
-        <div class="dropdown-container" id="figure-1-container">
-            <span class="dropdown-label">Figure 1:</span>
-            <select id="figure-1-type">
-                <option value="Non-Treated">Non-Recanalized</option>
+
+        <!-- Controls for Figure 2 -->
+        <div class="dropdown-container">
+            <span class="dropdown-label">Patient Category (Figure 2):</span>
+            <select id="patient-category-2">
+                <option value="LVO">LVO</option>
+                <option value="ALL">ALL</option>
+                <option value="NON_LVO">NON_LVO</option>
             </select>
         </div>
-        <div class="dropdown-container" id="figure-2-container">
-            <span class="dropdown-label">Figure 2:</span>
+        <div class="dropdown-container">
+            <span class="dropdown-label">Value 1 (Figure 2):</span>
+            <select id="value1-2">
+                <option value="MTT">MTT</option>
+                <option value="COV">COV</option>
+                <option value="CTH">CTH</option>
+                <option value="TTP">TTP</option>
+                <option value="CBF">CBF</option>
+                <option value="TMAX">TMAX</option>
+            </select>
+        </div>
+        <div class="dropdown-container">
+            <span class="dropdown-label">Value 2 (Figure 2):</span>
+            <select id="value2-2">
+                <option value="MTT">MTT</option>
+                <option value="COV">COV</option>
+                <option value="CTH">CTH</option>
+                <option value="TTP">TTP</option>
+                <option value="CBF">CBF</option>
+                <option value="TMAX">TMAX</option>
+            </select>
+        </div>
+        <div class="dropdown-container">
+            <span class="dropdown-label">Dimensionality (Figure 2):</span>
+            <select id="dimensionality-2">
+                <option value="3D">3D</option>
+                <option value="2D">2D</option>
+            </select>
+        </div>
+        <div class="dropdown-container">
+            <span class="dropdown-label">Figure 2 Type:</span>
             <select id="figure-2-type">
+                <option value="Recanalized">Recanalized</
                 <option value="Non-Treated">Non-Recanalized</option>
             </select>
         </div>
+
         <div class="button-container">
             <button id="visualize-button">Visualize</button>
+            <button id="enlarge-button">Enlarge Images</button>
+
         </div>
     </div>
+
     <div class="image-preview-container">
         <div class="image-container">
             <h3>Figure 1</h3>
@@ -148,21 +198,35 @@
 </div>
 
 <script>
+    document.getElementById("enlarge-button").addEventListener("click", function() {
+
+
+
+    // Hide the controls
+    document.getElementById("controls").classList.add("hidden");
+
+    // Enlarge both images
+    document.getElementById("image-1").classList.add("enlarged");
+    document.getElementById("image-2").classList.add("enlarged");
+});
+
 document.getElementById("visualize-button").addEventListener("click", function() {
-    const patientCategory = document.getElementById("patient-category").value;
-    const value1 = document.getElementById("value1").value; // Updated ID for Value 1
-    const value2 = document.getElementById("value2").value; // Updated ID for Value 2
-    const dimension = document.getElementById("dimensionality").value; // Updated ID for Dimension
+    // Get values for Figure 1
+    const patientCategory1 = document.getElementById("patient-category-1").value;
+    const value1_1 = document.getElementById("value1-1").value;
+    const value2_1 = document.getElementById("value2-1").value;
+    const dimension1 = document.getElementById("dimensionality-1").value;
+    const figure1Type = document.getElementById("figure-1-type").value;
 
-    console.log(`Patient Category: ${patientCategory}, Value 1: ${value1}, Value 2: ${value2}, Dimension: ${dimension}`);
+    console.log(`Figure 1 - Patient Category: ${patientCategory1}, Value 1: ${value1_1}, Value 2: ${value2_1}, Dimension: ${dimension1}, Type: ${figure1Type}`);
 
-    // Fetch image for Image 1
-    fetch(`/get_image?patient_category=${patientCategory}&value1=${value1}&value2=${value2}&dimension=${dimension}`)
+    // Fetch image for Figure 1
+    fetch(`/get_image?patient_category=${patientCategory1}&value1=${value1_1}&value2=${value2_1}&dimension=${dimension1}&figure_type=${figure1Type}`)
         .then(response => {
             if (response.ok) {
                 return response.blob();
             }
-            throw new Error('Image not found');
+            throw new Error('Image not found for Figure 1');
         })
         .then(imageBlob => {
             const imageObjectURL = URL.createObjectURL(imageBlob);
@@ -172,25 +236,31 @@ document.getElementById("visualize-button").addEventListener("click", function()
             console.error(error);
         });
 
-    // Fetch image for Image 2 (if needed, you can duplicate the fetch logic for a second image)
-    // If you want to fetch a different image for Figure 2, you can modify the fetch URL accordingly.
+    // Get values for Figure 2
+    const patientCategory2 = document.getElementById("patient-category-2").value;
+    const value1_2 = document.getElementById("value1-2").value;
+    const value2_2 = document.getElementById("value2-2").value;
+    const dimension2 = document.getElementById("dimensionality-2").value;
+    const figure2Type = document.getElementById("figure-2-type").value;
+
+    console.log(`Figure 2 - Patient Category: ${patientCategory2}, Value 1: ${value1_2}, Value 2: ${value2_2}, Dimension: ${dimension2}, Type: ${figure2Type}`);
+
+    // Fetch image for Figure 2
+    fetch(`/get_image?patient_category=${patientCategory2}&value1=${value1_2}&value2=${value2_2}&dimension=${dimension2}&figure_type=${figure2Type}`)
+        .then(response => {
+            if (response.ok) {
+                return response.blob();
+            }
+            throw new Error('Image not found for Figure 2');
+        })
+        .then(imageBlob => {
+            const imageObjectURL = URL.createObjectURL(imageBlob);
+            document.getElementById("image-2").src = imageObjectURL;
+        })
+        .catch(error => {
+            console.error(error);
+        });
 });
-
-
-document.getElementById("patient-category").addEventListener("change", function() {
-    const selectedCategory = this.value;
-    const recanalizedContainer = document.getElementById("recanalized-container");
-    const figure1Container = document.getElementById("figure-1-container");
-    const figure2Container = document.getElementById("figure-2-container");
-
-    if (selectedCategory === "LVO") {
-        recanalizedContainer.style.display = "block"; // Show recanalized options
-        figure1Container.style.display = "none"; // Hide non-recanalized options
-        figure2Container.style.display = "none"; // Hide non-recanalized options
-    } else {
-        recanalizedContainer.style.display = "none"; // Hide recanalized options
-        figure1Container.style.display = "block"; // Show non-recan
-
 </script>
-</body>
+
 </html>

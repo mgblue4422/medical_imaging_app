@@ -169,13 +169,46 @@
     display: block; /* Ensure it takes the full width */
 }
 
+         .fullscreen-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .fullscreen-overlay img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .fullscreen-overlay.active {
+            display: flex;
+        }
+
+        .compare-container {
+            display: flex;
+            gap: 20px;
+        }
+
+        .img-container.selected {
+            background-color: lightblue; /* Highlight selected images */
+        }
+
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             Synthetic Image Dashboard
-            <button id="toggle-sidebar" style="margin-left: 10px; background-color: #6db3f2; border: none; color: white; padding: 0.8em; border-radius: 5px; cursor: pointer;">Toggle Sidebar</button>
+
         </div>
         <div class="content">
             <div class="sidebar">
@@ -199,6 +232,8 @@
     <input type="checkbox" id="toggle-carousel">
                     <label for="sync-carousels">Sync Carousels:</label>
 <input type="checkbox" id="sync-carousels" checked>
+                    <!-- Overlay Selection Button -->
+                    <button id="compare-button" style="margin-top: 20px;">Compare Selected Images</button>
                     <!-- Overlay Selection Button -->
 
     <!-- First Carousel -->
@@ -241,7 +276,10 @@
             .
         </div>
     </div>
-
+<!-- Fullscreen Overlay -->
+    <div class="fullscreen-overlay" id="fullscreen-overlay">
+        <div class="compare-container" id="compare-container"></div>
+    </div>
     <script>
 
         // Existing script for sidebar and file upload handling
@@ -396,7 +434,39 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
+// Function to add click event listeners to images in a carousel
+function addImageClickListeners(carousel) {
+    const images = carousel.querySelectorAll('img');
+    images.forEach(img => {
+        img.addEventListener('click', () => {
+            const imgContainer = img.parentElement;
+            imgContainer.classList.toggle('selected'); // Toggle selection
+        });
+    });
+}
 
+// Function to show the comparison overlay
+function showComparison() {
+    const selectedImages = document.querySelectorAll('.img-container.selected img');
+    const compareContainer = document.getElementById('compare-container');
+    compareContainer.innerHTML = ''; // Clear previous images
+
+    selectedImages.forEach(img => {
+        const newImg = document.createElement('img');
+        newImg.src = img.src; // Use the source of the selected image
+        compareContainer.appendChild(newImg);
+    });
+
+    const overlay = document.getElementById('fullscreen-overlay');
+    overlay.classList.add('active'); // Show the overlay
+}
+
+// Add event listeners to the compare button
+document.getElementById('compare-button').addEventListener('click', showComparison);
+
+// Call the function to add click listeners to both carousels
+addImageClickListeners(document.getElementById('carousel1'));
+addImageClickListeners(document.getElementById('carousel2'));
 
 document.addEventListener('DOMContentLoaded', () => {
         const toggleCarouselCheckbox = document.getElementById('toggle-carousel');

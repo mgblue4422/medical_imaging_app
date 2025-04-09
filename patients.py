@@ -10,6 +10,7 @@ from PIL import Image
 import pandas as pd
 from io import BytesIO
 import os
+from forms import PatientForm
 
 
 
@@ -39,7 +40,7 @@ def upload_patient():
         patient_name = request.form['name']
         # Here you would typically save the patient to a database
         return redirect(url_for('patients.list_patients'))  # Redirect to the list of patients
-    return render_template('zoom.html')  # Render the upload form
+    return redirect(url_for('add_patient'))
 
 @patients_bp.route('/search', methods=['GET', 'POST'])
 def search_patient():
@@ -57,16 +58,35 @@ def stroke_case(case_id):
     csv_files = case.csv_files  # Fetch the associated CSV files
 
     # Read CSV data into a dictionary
-    csv_data = {}
+    csv_data = {}  # Initialize a dictionary to store CSV data
+
     for csv_file in csv_files:
-        # Use BytesIO to read the binary data as a CSV
+        # Check if file_data is None
+        if csv_file.file_data is None:
+            print(f"File data is None for file: {csv_file.filename}")
+            csv_data[csv_file.filename] = "<p>Error: No data available for this file.</p>"
+            continue  # Skip to the next file
 
-        df = pd.read_csv(BytesIO(csv_file.file_data))
-        df_cleaned = df.dropna(axis=1, how='any')
+        print(f"Processing file: {csv_file.filename}, Size: {len(csv_file.file_data)} bytes")
+        try:
+            # Use BytesIO to read the binary data as a CSV
+            df = pd.read_csv(BytesIO(csv_file.file_data))
 
-        csv_data[csv_file.filename] = df_cleaned.transpose().to_html(classes='table table-striped', index=True)  # Convert to HTML table
+            # Clean the DataFrame by dropping columns with any missing values
+            df_cleaned = df.dropna(axis=1, how='any')
 
-    return render_template('patientviewer8.html', case=case, patient_name=case.patient_name  , csv_data=csv_data)  # Pass the case to the template
+            # Convert the cleaned DataFrame to an HTML table and store it in the dictionary
+            csv_data[csv_file.filename] = df_cleaned.transpose().to_html(classes='table table-striped', index=True)
+
+        except Exception as e:
+            # Log the error message and continue to the next file
+            print(f"Error processing file {csv_file.filename}: {e}")
+            csv_data[
+                csv_file.filename] = f"<p>Error processing this file: {e}</p>"  # Optional: Store the error message in the dictionary
+
+    # Render the template with the case and CSV data
+    return render_template('patientviewer8.html', case=case, patient_name=case.patient_name, csv_data=csv_data)
+
 
 @patients_bp.route('/download_csv/<int:file_id>')
 @login_required
