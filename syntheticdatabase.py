@@ -1,62 +1,107 @@
 import os
-from flask import Flask, redirect, url_for, render_template
+import paramiko
+from flask import Flask, redirect, url_for, render_template, send_file, abort
 from flask_sqlalchemy import SQLAlchemy
+from io import BytesIO
 from db1 import db1  # Import the db1 instance
 
 app = Flask(__name__)
-EXTERNAL_DRIVE_PATH = '/Volumes/Seagate Bac/Thesis project 2025/database.db'  # Update this path accordingly
-# Define the patient data folder path
-SYNTH_DATA_FOLDER = '/Volumes/Seagate Bac/Syth_data/Data_Synthetic/GAN_project_2024/HA-GAN/Results/Stroke/'  # Update this path
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + EXTERNAL_DRIVE_PATH
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Volumes/Seagate Bac/Thesis project 2025/database.db'
 app.config['SECRET_KEY'] = 'your_secret_key'
 db1.init_app(app)
+
+# SFTP server details
+SFTP_HOST = 'ssh2.ux.uis.no'
+SFTP_PORT = 22
+SFTP_USERNAME = 'u250639'
+SFTP_PASSWORD = 'AspireSkidMoustache'  # Replace with your actual password
+REMOTE_FOLDER_PATH = '/nfs/prosjekt/IschemicStroke/Program/Data_Synthetic/GAN_project_2024/HA-GAN/Results/Stroke/990500'
 
 # Model for storing image metadata and image file path
 class ImageModel(db1.Model):
     id = db1.Column(db1.Integer, primary_key=True)
     filename = db1.Column(db1.String(150), nullable=False)
-    synthetic_patient_id = db1.Column(db1.String(50), nullable=False)  # To store synthetic patient ID
-    file_path = db1.Column(db1.String(255), nullable=False)  # To store the file path
+    synthetic_patient_id = db1.Column(db1.String(50), nullable=False)
+    file_path = db1.Column(db1.String(255), nullable=False)
 
-# Create the database tables if they do not exist
 @app.route('/create_tables', methods=['GET'])
 def create_tables():
     with app.app_context():
-        db1.create_all()  # Create tables
+        db1.create_all()
     return "Tables created successfully!"
-
 
 def process_images():
     try:
-        for patient_folder in os.listdir(SYNTH_DATA_FOLDER):
-            patient_path = os.path.join(SYNTH_DATA_FOLDER, patient_folder)
-            if os.path.isdir(patient_path):  # Check if it's a directory
-                for filename in os.listdir(patient_path):
-                    if allowed_file(filename):
-                        file_path = os.path.join(patient_path, filename)
+        # Create an SFTP client
+        transport = paramiko.Transport((SFTP_HOST, SFTP_PORT))
+        transport.connect(username=SFTP_USERNAME, password=SFTP_PASSWORD)
+        sftp = paramiko.SFTPClient.from_transport(transport)
 
-                        # Save metadata and file path to the database
-                        new_image = ImageModel(
-                            filename=filename,
-                            synthetic_patient_id=patient_folder,
-                            file_path=file_path  # Store the file path instead of image data
-                        )
-                        db1.session.add(new_image)
-                        db1.session.commit()
+        # List files in the remote directory
+        try:
+            remote_files = sftp.listdir(REMOTE_FOLDER_PATH)
+            print(f"Files in {REMOTE_FOLDER_PATH}: {remote_files}")  # Debug print
+        except FileNotFoundError:
+            print(f"Error: The remote directory {REMOTE_FOLDER_PATH} does not exist.")
+            return
+        except Exception as e:
+            print(f"Error listing files: {e}")
+            return
+
+        for filename in remote_files:
+            if allowed_file(filename):
+                file_path = os.path.join(REMOTE_FOLDER_PATH, filename)
+
+                # Extract patient ID from the filename
+                patient_id = os.path.splitext(filename)[0]
+
+                # Save metadata and file path to the database
+                new_image = ImageModel(
+                    filename=filename,
+                    synthetic_patient_id=patient_id,
+                    file_path=file_path
+                )
+                db1.session.add(new_image)
+                db1.session.commit()
+
+        # Close the SFTP connection
+        sftp.close()
+        transport.close()
     except Exception as e:
-        print(f"An error occurred: {e}")  # Log the error message
-
-@app.route('/')
-def index():
-    return render_template('index.html')
+        print(f"An error occurred: {e}")
 
 @app.route('/add_images', methods=['GET'])
 def add_images():
-    process_images()  # Call the function to process and add images to the database
+    process_images()
     return "Synthetic data uploaded successfully!"
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'tiff', 'tif'}
+
+@app.route('/image', methods=['GET'])
+def get_image():
+    try:
+        # Create an SFTP client
+        transport = paramiko.Transport((SFTP_HOST, SFTP_PORT))
+        transport.connect(username=SFTP_USERNAME, password=SFTP_PASSWORD)
+        sftp = paramiko.SFTPClient.from_transport(transport)
+
+        # Specify the remote file path (you may want to get this from the database)
+        remote_file_path = '/nfs/prosjekt/IschemicStroke/Data/Region_Analysis/Plots/NO_holes/Core_CTP_and_NOTCore_DWI/histogram3D/100/CBF_COV/2D/Clear/CBF_COV_LVO.png'
+
+        # Open the remote file
+        with sftp.file(remote_file_path, 'rb') as remote_file:
+            image_data = remote_file.read()
+
+        # Close the SFTP connection
+        sftp.close()
+        transport.close()
+
+        # Serve the image
+        return send_file(BytesIO(image_data), mimetype='image/png')
+    except Exception as e:
+        print(f"Error: {e}")
+        abort(404)
 
 if __name__ == '__main__':
     app.run(debug=True)

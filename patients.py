@@ -1,7 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for ,jsonify, current_app
 from decorators import login_required
 from db1 import db1  # Adjust the import based on your project structure
-#from patientsdatabase2 import StrokeCase , Session, NiiFile # Adjust the import based on your project structure
 from patientdatabase import Patient ,CTAFile, CBFFile ,CBVFile ,CTPFile ,MRIFile  ,MTTFile , TMAXFile , GroundTruthFile ,DoctorNote
 import nibabel as nib  # Add this line
 import matplotlib.pyplot as plt

@@ -18,7 +18,11 @@ import io
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Volumes/Seagate Bac/Thesis project 2025/database.db'
+# Get the directory of the current file (this file)
+basedir = os.path.abspath(os.path.dirname(__file__))
+
+# Define the database URI using a relative path
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(basedir, "database.db")}'
 app.config['SECRET_KEY'] = 'your_secret_key'
 db1.init_app(app)  # Initialize the first db1 instance with the app
 bcrypt = Bcrypt(app)
@@ -239,6 +243,49 @@ def get_image():
 
     print("No image found after switching values.")
     return jsonify({'error': 'Image not found'}), 404
+
+
+def find_matching_histogram_images(folder_path, patient_category, value1, value2, dimension):
+    matching_images = []
+
+    try:
+        for root, dirs, files in os.walk(folder_path):
+            for filename in files:
+                # Check for patient category
+                if patient_category and patient_category not in filename:
+                    continue
+
+                # Check for value1 and value2
+                if value1 and value1 not in filename:
+                    continue
+                if value2 and value2 not in filename:
+                    continue
+
+                # Check for dimension
+                if dimension and dimension not in filename:
+                    continue
+
+                # If all conditions are met, add the file path to the list
+                file_path = os.path.join(root, filename)
+                matching_images.append(file_path)
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+    return matching_images
+
+
+@app.route('/search_images', methods=['GET'])
+def search_images():
+    folder_path = '/Volumes/Seagate Bac/analysis_imgs/3D Histogram curves/'  # Update this path
+    patient_category = request.args.get('patient_category')  # e.g., 'LVO', 'NonLVO', 'All'
+    value1 = request.args.get('value1')  # First value being plotted
+    value2 = request.args.get('value2')  # Second value being plotted
+    dimension = request.args.get('dimension')  # e.g., '2D' or '3D'
+
+    matching_files = find_matching_histogram_images(folder_path, patient_category, value1, value2, dimension)
+
+    return jsonify(matching_files)  # Return the list of matching files as JSON
 
 
 
