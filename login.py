@@ -24,6 +24,8 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 # Define the database URI using a relative path
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(basedir, "database.db")}'
 app.config['SECRET_KEY'] = 'your_secret_key'
+print(app.config['SQLALCHEMY_DATABASE_URI'])
+
 db1.init_app(app)  # Initialize the first db1 instance with the app
 bcrypt = Bcrypt(app)
 migrate = Migrate(app, db1)
