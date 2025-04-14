@@ -8,10 +8,14 @@ from datetime import datetime
 #this is the vesrions of the database w the time stamp and doctors note
 app = Flask(__name__)
 
-# Please change these database paths
-EXTERNAL_DRIVE_PATH = '/Volumes/Seagate Bac/Thesis project 2025/database.db'  # Update this path accordingly
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + EXTERNAL_DRIVE_PATH
+# Get the directory of the current file (this file)
+basedir = os.path.abspath(os.path.dirname(__file__))
+
+# Define the database URI using a relative path
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(basedir, "database.db")}'
 app.config['SECRET_KEY'] = 'your_secret_key'
+print(app.config['SQLALCHEMY_DATABASE_URI'])
+
 db1.init_app(app)
 # Define the base folder path for patient data
 BASE_FOLDER_PATH = '/Users/g/Desktop/isles24_train_b'  # Update this path accordingly
