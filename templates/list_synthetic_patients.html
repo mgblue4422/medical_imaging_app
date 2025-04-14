@@ -1,0 +1,104 @@
+<!-- list_patients.html -->
+
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stroke Cases</title>
+    <style>
+        /* General page layout and design */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7; /* Light gray background */
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color:#86cae3; /* Blue header */
+            color: #ffffff;
+            text-align: center;
+            padding: 20px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        header .icon {
+            margin-right: 15px;
+            font-size: 2em;
+        }
+
+        /* Content styles */
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #ffffff; /* Blue for contrast */
+            padding: 20px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 20px;
+        }
+        li {
+            padding: 12px;
+            background-color: #f7f7f7; /* Light gray background for each item */
+            border: 1px solid #ddd; /* Soft border for a light, calming look */
+            border-radius: 5px;
+            margin: 8px 0;
+            transition: background-color 0.3s ease;
+        }
+        li:hover {
+            background-color: #e5e5e5; /* Light gray hover effect */
+            cursor: pointer;
+        }
+        a {
+            color: #3498db; /* Blue for links */
+            text-decoration: none;
+            font-weight: bold;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* Medical icon styles */
+        .icon {
+            font-family: "Font Awesome 5 Free";
+            font-weight: 900;
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+        <div class="icon">&#xf0f9;</div> <!-- Hospital icon from FontAwesome -->
+        <span>Stroke Cases Overview</span>
+    </header>
+<div class="container">
+    <h2>List of Unique Synthetic Patients</h2>
+    <ul>
+        {% for patient_id in synthetic_patient_ids %}
+            <li><a href="{{ url_for('syntheticdata.stroke_case', case_id=patient_id) }}">{{ patient_id }}</a></li>
+        {% else %}
+            <li>No synthetic patients found.</li>
+        {% endfor %}
+    </ul>
+</div>
+
+
+</body>
+</html>
+{% endblock %}
