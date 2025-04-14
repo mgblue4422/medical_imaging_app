@@ -35,7 +35,7 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 
 
-# Get the directory of the current file (this file)
+# Get the directory of the current file
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 # Define the upload folder path relative to the application directory
