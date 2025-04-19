@@ -323,8 +323,11 @@ let currentIndex2 = 0;
 async function fetchSlices(isSecondCarousel = false) {
      // Define the URLs for each carousel
     const url = isSecondCarousel
-        ? `http://127.0.0.1:5000/patients/slices2/sub-stroke0150/ctp`
+
+        ? `http://127.0.0.1:5000/syntheticdata/get_images`
         : `http://127.0.0.1:5000/syntheticdata/tiff_slices/${patientName}`;
+    console.log('Fetching from URL:', url);
+
 
     const response = await fetch(url);
 
@@ -333,16 +336,21 @@ async function fetchSlices(isSecondCarousel = false) {
         return [];
     }
     const data = await response.json();
-    console.log('Fetched slices:', data.slices); // Log the fetched slices
-    return data.slices;
+    console.log('Fetched slices:', data); // Log the fetched slices
+    // Check if the response contains slices or images
+    if (data.slices) {
+        return data.slices; // Handle slice paths
+    } else {
+        return data.map(image => image.image_data); // Handle image data
+    }
 }
 
 // Initialize both carousels based on the selected file type
 async function initializeCarousels() {
 
 
-    images1 = await fetchSlices(); // Fetch for the first carousel (with overlay logic)
-    images2 = await fetchSlices( true); // Fetch for the second carousel (without overlay)
+    images1 = await fetchSlices(); // Fetch for the first carousel
+    images2 = await fetchSlices( true); // Fetch for the second carousel
     currentIndex1 = 0;
     currentIndex2 = 0;
     displayImages(carousel1, imageCounter1, images1, currentIndex1);
@@ -350,23 +358,65 @@ async function initializeCarousels() {
 }
 
 
+function isBase64(string) {
+    // Check if the string is a valid Base64 string
+    const base64Pattern = /^[A-Za-z0-9+/]+={0,2}$/; // Base64 pattern
+    return base64Pattern.test(string) && (string.length % 4 === 0); // Check length is a multiple of 4// Function to display images in the carousel
+}
 
-
-
-// Function to display images in the carousel
 function displayImages(carousel, imageCounter, images, currentIndex) {
+     console.log( currentIndex); // This will log the value of images[index]
+    currentIndex= currentIndex
+     console.log( currentIndex); // This will log the value of images[index]
     carousel.innerHTML = '';
     imageCounter.textContent = `${currentIndex + 1}/${images.length}`;
+    console.log( images); // This will log the value of images[index]
+     console.log( currentIndex); // This will log the value of images[index]
+    console.log('displaying images')
+    // Check if currentIndex is a valid number
+    if (isNaN(currentIndex)) {
+        console.error('currentIndex is NaN, setting to 0');
+        currentIndex = 0; // Default to 0 if NaN
+    }
 
     for (let i = 0; i < 4; i++) {
+
+
+
         const index = (currentIndex + i) % images.length;
         const imgContainer = document.createElement('div');
         const img = document.createElement('img');
         const label = document.createElement('div');
 
-        img.src = `http://127.0.0.1:5000/syntheticdata/${images[index]}`; // Include the blueprint name
+        // Check if image_data is Base64 or a URL
+
+
+        if (isBase64(images[index])) {
+                // If it's Base64, set the src accordingly
+                img.src = `data:image/jpeg;base64,${images[index]}`; // Use Base64 data directly
+            } else {
+                // Otherwise, treat it as a URL
+                img.src = `http://127.0.0.1:5000/syntheticdata/${images[index]}`; // Adjust the URL as necessary
+            }
+        
+            console.log('Displaying image:', img.src); // Log the image source
+
+
+
+
+
+
 
         console.log('Displaying image:', img.src); // Log the image source
+        currentImageSrc = img.src;
+
+        const imageSrc = images[index]; // Get the image path
+        IMMGG = imageSrc;
+        console.log('Current Index:', currentIndex);
+        console.log('Loop Index:', index);
+        console.log('Images Array:', images);
+        console.log('Image at Index:', images[index]); // Log the specific image being accessed
+
         label.textContent = `Image ${index + 1}`;
         label.classList.add('image-label');
 
@@ -382,8 +432,11 @@ function displayImages(carousel, imageCounter, images, currentIndex) {
 // Get reference to the sync checkbox
 const syncCheckbox = document.getElementById('sync-carousels');
 // Navigation button event listeners for the first carousel
+// Navigation button event listeners for the first carousel
 prevBtn1.addEventListener('click', () => {
-    currentIndex1 = (currentIndex1 - 1 + images1.length) % images1.length;
+    console.log('Before Prev Click - currentIndex1:', currentIndex1);
+    currentIndex1 = (currentIndex1 - 1 )  ;
+    console.log('After Prev Click - currentIndex1:', currentIndex1);
     displayImages(carousel1, imageCounter1, images1, currentIndex1);
 
     // Sync if the checkbox is checked and the second carousel is visible
@@ -394,7 +447,9 @@ prevBtn1.addEventListener('click', () => {
 });
 
 nextBtn1.addEventListener('click', () => {
-    currentIndex1 = (currentIndex1 + 1) % images1.length;
+    console.log('Before Next Click - currentIndex1:', currentIndex1);
+    currentIndex1 = (currentIndex1 + 1) ;
+    console.log('After Next Click - currentIndex1:', currentIndex1);
     displayImages(carousel1, imageCounter1, images1, currentIndex1);
 
     // Sync if the checkbox is checked and the second carousel is visible
@@ -403,10 +458,9 @@ nextBtn1.addEventListener('click', () => {
         displayImages(carousel2, imageCounter2, images2, currentIndex2);
     }
 });
-
 // Navigation button event listeners for the second carousel
 prevBtn2.addEventListener('click', () => {
-    currentIndex2 = (currentIndex2 - 1 + images2.length) % images2.length;
+    currentIndex2 = (currentIndex2 - 1 ) ;
     displayImages(carousel2, imageCounter2, images2, currentIndex2);
 
     // Sync if the checkbox is checked and the first carousel is visible
@@ -417,7 +471,7 @@ prevBtn2.addEventListener('click', () => {
 });
 
 nextBtn2.addEventListener('click', () => {
-    currentIndex2 = (currentIndex2 + 1) % images2.length;
+    currentIndex2 = (currentIndex2 + 1) ;
     displayImages(carousel2, imageCounter2, images2, currentIndex2);
 
     // Sync if the checkbox is checked and the first carousel is visible
@@ -445,24 +499,7 @@ function addImageClickListeners(carousel) {
     });
 }
 
-// Function to show the comparison overlay
-function showComparison() {
-    const selectedImages = document.querySelectorAll('.img-container.selected img');
-    const compareContainer = document.getElementById('compare-container');
-    compareContainer.innerHTML = ''; // Clear previous images
 
-    selectedImages.forEach(img => {
-        const newImg = document.createElement('img');
-        newImg.src = img.src; // Use the source of the selected image
-        compareContainer.appendChild(newImg);
-    });
-
-    const overlay = document.getElementById('fullscreen-overlay');
-    overlay.classList.add('active'); // Show the overlay
-}
-
-// Add event listeners to the compare button
-document.getElementById('compare-button').addEventListener('click', showComparison);
 
 // Call the function to add click listeners to both carousels
 addImageClickListeners(document.getElementById('carousel1'));

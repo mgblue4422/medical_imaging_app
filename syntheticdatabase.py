@@ -4,6 +4,7 @@ from flask import Flask, redirect, url_for, render_template, send_file, abort
 from flask_sqlalchemy import SQLAlchemy
 from io import BytesIO
 from db1 import db1  # Import the db1 instance
+from config import *
 
 app = Flask(__name__)
 # Get the directory of the current file (this file)
@@ -19,8 +20,8 @@ db1.init_app(app)
 # SFTP server details
 SFTP_HOST = 'ssh2.ux.uis.no'
 SFTP_PORT = 22
-SFTP_USERNAME = 'u250639'
-SFTP_PASSWORD = 'AspireSkidMoustache'  # Replace with your actual password
+SFTP_USERNAME = SFTP_USERNAME
+SFTP_PASSWORD = SFTP_PASSWORD  # Replace with your actual password
 REMOTE_FOLDER_PATH = '/nfs/prosjekt/IschemicStroke/Program/Data_Synthetic/GAN_project_2024/HA-GAN/Results/Stroke/990500'
 
 # Model for storing image metadata and image file path

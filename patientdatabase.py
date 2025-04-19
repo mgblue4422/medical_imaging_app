@@ -1,11 +1,14 @@
 import os
 import pandas as pd
-from flask import Flask
+from flask import Flask , request , jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import LargeBinary
 from db1 import db1  # Import the db1 instance
 from datetime import datetime
-#this is the vesrions of the database w the time stamp and doctors note
+from config import *
+import paramiko
+import re
+
 app = Flask(__name__)
 
 # Get the directory of the current file (this file)
@@ -17,8 +20,18 @@ app.config['SECRET_KEY'] = 'your_secret_key'
 print(app.config['SQLALCHEMY_DATABASE_URI'])
 
 db1.init_app(app)
-# Define the base folder path for patient data
+
 BASE_FOLDER_PATH = '/Users/g/Desktop/isles24_train_b'  # Update this path accordingly
+
+
+
+# SFTP server details for the upload
+SFTP_UPLOAD_HOST = 'ssh2.ux.uis.no'
+SFTP_UPLOAD_PORT = 22
+SFTP_UPLOAD_USERNAME = SFTP_USERNAME
+SFTP_UPLOAD_PASSWORD = SFTP_PASSWORD  # Replace with your actual password
+REMOTE_UPLOAD_FOLDER_PATH = '/nfs/prosjekt/IschemicStroke/Data/CTP/Pre-processed/SUS2020/Dataset/IMAGES_1_1_1_0.5'  # Change to your desired upload path
+
 
 # Define the Patient model
 class Patient(db1.Model):
@@ -55,6 +68,7 @@ class CTPFile(db1.Model):
     filename = db1.Column(db1.String(255), nullable=False)
     patient_id = db1.Column(db1.Integer, db1.ForeignKey('patient.id'), nullable=False)
     file_path = db1.Column(db1.String(255), nullable=False)  # Store file path
+    is_folder = db1.Column(db1.Boolean, default=False)
 
 class MRIFile(db1.Model):
     id = db1.Column(db1.Integer, primary_key=True)
@@ -198,7 +212,85 @@ def store_patient_data(BASE_FOLDER_PATHh):
     # Commit all changes to the database
     db1.session.commit()
 
+@app.route('/upload_patient_folders', methods=['GET'])
+def upload_patient_folders():
+    # Get the remote folder path from the request
+    remote_folder_path = REMOTE_UPLOAD_FOLDER_PATH
+    print(f"Received remote folder path: {remote_folder_path}")
 
-# Run Flask
+    if not remote_folder_path:
+        print("Error: Remote folder path is required.")
+        return jsonify({"error": "Remote folder path is required"}), 400
+
+    try:
+        # Create an SFTP client
+        print("Connecting to SFTP server...")
+        transport = paramiko.Transport((SFTP_UPLOAD_HOST, SFTP_UPLOAD_PORT))
+        transport.connect(username=SFTP_UPLOAD_USERNAME, password=SFTP_UPLOAD_PASSWORD)
+        print("Connected to SFTP server.")
+
+        with paramiko.SFTPClient.from_transport(transport) as sftp:
+            print(f"Listing folders in remote directory: {remote_folder_path}")
+            patient_folders = sftp.listdir(remote_folder_path)
+            print(f"Found patient folders: {patient_folders}")
+
+            if not patient_folders:
+                print("No patient folders found.")
+                return jsonify({"message": "No patient folders found."}), 200
+
+            for patient_folder in patient_folders:
+                folder_path = os.path.join(remote_folder_path, patient_folder)
+                print(f"Checking if {folder_path} is a directory...")
+
+                # Check if the item is a directory
+                if sftp.stat(folder_path).st_mode & 0o40000:  # Check if it's a directory
+
+                    # Extract all numeric parts from the patient_folder name
+                    matches = re.findall(r'\d+', patient_folder)  # Find all sequences of digits
+                    if matches:
+                        # Concatenate the numeric parts and convert to an integer
+                        patient_idnr = int(''.join(matches))  # Join all matched numeric parts together and convert to int
+                    else:
+                        print(f"Error: No numeric ID found in patient folder name '{patient_folder}'.")
+                        continue  # Skip this folder if no numeric ID is found
+
+                    patient_id = patient_folder  # Assuming the folder name is the patient ID
+                    print(f"Adding patient folder: {patient_id} with path: {folder_path}")
+
+                    # Check if the patient already exists in the database
+                    existing_patient = db1.session.query(Patient).filter_by(id=patient_idnr ).first()
+
+                    if not existing_patient:
+                        # Create a new Patient entry if it doesn't exist
+                        new_patient = Patient(id=patient_idnr , patient_name=patient_id)
+                        db1.session.add(new_patient)
+                        print(f"Created new patient entry for: {patient_id}")
+
+                    # Create a new CTPFile entry for the patient folder
+                    new_ctp_file = CTPFile(
+                        patient_id=patient_idnr,
+                        file_path=folder_path,  # Store the path to the patient folder
+                        is_folder=True,  # Indicate that this is a folder
+                        filename = patient_folder
+                    )
+                    db1.session.add(new_ctp_file)
+
+            # Commit the session to save the CTPFile entries
+            print("Committing changes to the database...")
+            db1.session.commit()
+            print("Changes committed successfully.")
+
+        return jsonify({"message": "Patient folders uploaded successfully!"}), 200
+
+    except paramiko.SSHException as ssh_error:
+        print(f"SSH error: {str(ssh_error)}")
+        return jsonify({"error": f"SSH error: {str(ssh_error)}"}), 500
+    except FileNotFoundError as fnf_error:
+        print(f"File not found: {str(fnf_error)}")
+        return jsonify({"error": f"File not found: {str(fnf_error)}"}), 404
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == '__main__':
     app.run(debug=True)

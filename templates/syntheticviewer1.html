@@ -353,7 +353,7 @@
         async function fetchSlices(isSecondCarousel = false) {
             // Define the URLs for each carousel
             const url = isSecondCarousel
-                ? `http://127.0.0.1:5000/patients/slices2/sub-stroke0150/ctp`
+                ? `http://localhost:5000/syntheticdata/patients/3011/ctp_files/tiff_slices`
                 : `http://127.0.0.1:5000/syntheticdata/tiff_slices/${patientName}`;
 
             const response = await fetch(url);
@@ -385,11 +385,16 @@
             carousel.innerHTML = '';
             imageCounter.textContent = `${currentIndex + 1}/${images.length}`;
 
+            console.log(`Value of images[${index}]:`, images); // This will log the value of images[index]
+
             for (let i = 0; i < 4; i++) {
                 const index = (currentIndex + i) % images.length;
                 const imgContainer = document.createElement('div');
                 const img = document.createElement('img');
                 const label = document.createElement('div');
+
+                // Log the value of images[index]
+                console.log(`Value of images[${index}]:`, images[index]); // This will log the value of images[index]
 
                 img.src = `http://127.0.0.1:5000/syntheticdata/${images[index]}`; // Include the blueprint name
 

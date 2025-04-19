@@ -6,7 +6,7 @@ from db1 import db1  # Import the db1 instance
 from sqlalchemy import LargeBinary
 
 app = Flask(__name__)
-EXTERNAL_DRIVE_PATH = '/Volumes/Seagate Bac/Thesis project 2025/database.db'  # Update this path accordingly
+EXTERNAL_DRIVE_PATH = '/Volumes/Seagate Bac/Thesis project 2025/database_messed up_patients.db'  # Update this path accordingly
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + EXTERNAL_DRIVE_PATH
 app.config['SECRET_KEY'] = 'your_secret_key'
 db1.init_app(app)
