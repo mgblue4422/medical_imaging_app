@@ -2,9 +2,14 @@
 
 To run the application, you need to update the paths in the code to reflect the correct locations for the isles patient data. Please follow the instructions below:
 
+## Step 1: Update user Data  `config.py`
+
+Change the user and pass code to your login details-
+
+---
 
 
-## Step 1: Update Patient Data Path in `patientsdatabase.py`
+## Step 2: Update Patient Data Path in `patientsdatabase.py`
 
 Next, locate the following line in the code:
 
@@ -19,7 +24,7 @@ BASE_FOLDER_PATH = 'D:\\PatientData\\isles24_train_b'
 ---
 
 
-## Step 2: Upload Patient Data
+## Step 3: Upload Patient Data
 
 1. Run the Application: Start your Flask application by executing the `patientdatabase.py` script:
 
@@ -35,7 +40,7 @@ BASE_FOLDER_PATH = 'D:\\PatientData\\isles24_train_b'
 
 ---
 
-## Step 3:    run the application using login.py
+## Step 4:    run the application using login.py
 
 
 
