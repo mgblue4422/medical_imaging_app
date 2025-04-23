@@ -122,10 +122,12 @@
 
         <div class="step-container" id="step-3">
             <h3>📊 Data Synthesization</h3>
-            <p>Analyze and compare real and synthetic images.</p>
             <ul>
-                <li>Double-click an image to zoom in.</li>
-                <li>Select one real and one synthetic image, then press <strong>Compare</strong> to view them side by side.</li>
+                <li><strong>Access synthetic patient data:</strong> Click on <strong>Synthetic Data</strong> in the navigation bar to see the list of synthetic patient files.</li>
+                <li><strong>Compare synthetic and real data:</strong> Select a synthetic patient file, and compare synthetic images (top carousel) with real patient images (bottom carousel).</li>
+                <li><strong>Show/Hide Real Images:</strong> Use the <strong>Show Second Carousel</strong> checkbox to toggle the visibility of real images for comparison.</li>
+                <li><strong>Sync Carousels:</strong> Enable the <strong>Sync Carousels</strong> option to synchronize both carousels, ensuring that the real images update while navigating through synthetic images.</li>
+                <li><strong>For clinicians and researchers:</strong> This feature is particularly useful for validating synthetic data in clinical settings or training machine learning models.</li>
             </ul>
             <button class="btn" onclick="nextStep(3)">Next</button>
         </div>
@@ -144,10 +146,14 @@
 
          <div class="step-container" id="step-5">
             <h3> 🧠Regional Analysis </h3>
-            <ul>
-                <li>Users can specify Patient <strong>Category, Color Maps, and Dimentional (2D/3D)</strong> visualization options..</li>
-                <li> Users can compare <strong> Treated vs. Non-Treated </strong> images by selecting them from dropdown menus.</li>
-                <li>Clicking the "Visualize" button  displays the selected images side by side for easy comparison</li>
+             <ul>
+                <li><strong>Access the Regional Analysis page:</strong> Click on <strong>Regional Analysis</strong> in the navigation bar to perform regional analyses of perfusion data based on selected parameters.</li>
+                <li><strong>Patient Category:</strong> Choose from LVO (Large Vessel Occlusion), NON_LVO (Non-Large Vessel Occlusion), or All (patients from both groups).</li>
+                <li><strong>Value 1:</strong> Choose one of the perfusion metrics: MTT, COV, CTH, TTP, CBF, or Tmax.</li>
+                <li><strong>Value 2:</strong> Select a second perfusion metric for comparison, which includes the same options as Value 1.</li>
+                <li><strong>Dimensionality:</strong> Choose the dimensionality of the images—2D, 3D, or Both.</li>
+                <li><strong>Type:</strong> Specify whether the figures represent Re-canalized, Non-Re-canalized cases, or neither.</li>
+                <li><strong>Visualize:</strong> After selecting all the parameters, click the <strong>Visualize</strong> button to generate figures based on your chosen criteria. These figures will appear in the preview fields for easy comparison.</li>
             </ul>
             <button class="btn" onclick="nextStep(5)">Next</button>
         </div>
