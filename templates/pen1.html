@@ -10,25 +10,6 @@
             background-color: #eefaff;
             padding: 20px;
         }
-
-        /* Style for the homepage button */
-        .homepage-button {
-            position: fixed; /* Fixed position to stay at the top */
-            top: 10px;
-            left: 10px;
-            background-color:#e6a8d7; /* Green */
-            border: none;
-            color: white;
-            padding: 10px 20px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 16px;
-            cursor: pointer;
-            border-radius: 5px;
-            z-index: 1000; /* Ensure it's on top of other elements */
-        }
-
         .toolbar {
             display: flex;
             justify-content: center;
@@ -133,12 +114,8 @@
     </style>
 </head>
 <body>
-
-    <!-- Homepage Button -->
-   <a href="http://127.0.0.1:5000/bac#" class="homepage-button">Go to Homepage</a>
-
-
     <div class="toolbar">
+        <a href="elebac.html"><button><img src="/static/images/home.png" alt="Hjem"></button></a> <!-- Hjem knapp -->
         <button id="zoom-in"><img src="/static/images/img.png" alt="Zoom inn"></button>
         <button id="zoom-out"><img src="/static/images/img_1.png" alt="Zoom ut"></button>
         <button id="rotate"><img src="/static/images/img_2.png" alt="Roter"></button>

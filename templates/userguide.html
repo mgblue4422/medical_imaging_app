@@ -77,9 +77,31 @@
         .btn:hover {
             background-color: #ffc107;
         }
+         /* Style for the homepage button */
+        .homepage-button {
+            position: fixed; /* Fixed position to stay at the top */
+            top: 10px;
+            left: 10px;
+            background-color:#e6a8d7; /* Green */
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            z-index: 1000; /* Ensure it's on top of other elements */
+        }
+
     </style>
 </head>
 <body>
+    <!-- Homepage Button -->
+   <a href="http://127.0.0.1:5000/bac#" class="homepage-button">Go to Homepage</a>
+
+
     <div class="content">
         <h2>User Guide</h2>
         <div class="step-container active" id="step-1">
@@ -109,20 +131,21 @@
         </div>
 
         <div class="step-container" id="step-4">
-            <h3> 📉Regional Analysis </h3>
+            <h3> 📉Manual annotation </h3>
             <ul>
                 <li>Use the <strong>draw function</strong> to highlight specific areas and the <strong>print function</strong> to save the marked sections as a PNG or CSV file on your computer.</li>
                 <li>Use the <strong>erase function</strong> to erase marked lines.</li>
                 <li>Use the <strong>ruler</strong> to measure the distance between two points.</li>
+                <li>Use the <strong>pen</strong> tool to highlight the desired areas, then click the save icon to store the data along with your selected file on your computer.</li>
                 <li>Use interactive features like zoom, pan, and window/level adjustment for better image viewing.</li>
             </ul>
             <button class="btn" onclick="nextStep(4)">Next</button>
         </div>
 
          <div class="step-container" id="step-5">
-            <h3> 🧠Analysis </h3>
+            <h3> 🧠Regional Analysis </h3>
             <ul>
-                <li>Users can specify Patient <strong>Category, Color Maps, and XD (2D/3D)</strong> visualization options..</li>
+                <li>Users can specify Patient <strong>Category, Color Maps, and Dimentional (2D/3D)</strong> visualization options..</li>
                 <li> Users can compare <strong> Treated vs. Non-Treated </strong> images by selecting them from dropdown menus.</li>
                 <li>Clicking the "Visualize" button  displays the selected images side by side for easy comparison</li>
             </ul>

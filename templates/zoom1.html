@@ -78,9 +78,29 @@
     transform: scale(1.5); /* Scale up the images */
     transition: transform 0.3s ease; /* Smooth transition */
 }
+         /* Style for the homepage button */
+        .homepage-button {
+            position: fixed; /* Fixed position to stay at the top */
+            top: 10px;
+            left: 10px;
+            background-color:#e6a8d7; /* Green */
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            z-index: 1000; /* Ensure it's on top of other elements */
+        }
+
 
     </style>
 </head>
+<a href="http://127.0.0.1:5000/bac#" class="homepage-button">Go to Homepage</a>
+
 <body>
    <div class="container">
     <div class="controls">
