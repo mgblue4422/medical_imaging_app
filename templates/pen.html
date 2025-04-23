@@ -16,7 +16,7 @@
             position: fixed; /* Fixed position to stay at the top */
             top: 10px;
             left: 10px;
-            background-color:#e6a8d7; /* Green */
+            background-color:#e6a8d7x; /* Green */
             border: none;
             color: white;
             padding: 10px 20px;
@@ -221,6 +221,7 @@
         let isMeasuring = false;
         let brightness = 1;
         let drawingColor = "red"; // Default drawing color
+        let pointRadius = 5; // Radius for the filled point
 
         // Function to apply transformations to the image and canvas
         const applyTransform = (imgElement, canvasElement) => {
@@ -299,6 +300,13 @@
             isDrawing = true;
             lastX = e.offsetX;
             lastY = e.offsetY;
+            // Draw a filled circle
+            const ctx = canvasElement.getContext("2d");
+            ctx.fillStyle = drawingColor;
+            ctx.beginPath();
+            ctx.arc(lastX, lastY, pointRadius, 0, 2 * Math.PI);
+            ctx.fill();
+
             lines.push({ x1: lastX, y1: lastY, x2: lastX, y2: lastY });
             isMeasuring = false;
         };
