@@ -10,13 +10,11 @@
             background-color: #eefaff;
             padding: 20px;
         }
-
-        /* Style for the homepage button */
         .homepage-button {
-            position: fixed; /* Fixed position to stay at the top */
+            position: fixed;
             top: 10px;
             left: 10px;
-            background-color:#e6a8d7x; /* Green */
+            background-color: #e6a8d7;
             border: none;
             color: white;
             padding: 10px 20px;
@@ -26,9 +24,8 @@
             font-size: 16px;
             cursor: pointer;
             border-radius: 5px;
-            z-index: 1000; /* Ensure it's on top of other elements */
+            z-index: 1000;
         }
-
         .toolbar {
             display: flex;
             justify-content: center;
@@ -85,7 +82,7 @@
             top: 0;
             left: 0;
             pointer-events: auto;
-            z-index: 1; /* Ensures canvas is above the image */
+            z-index: 1;
         }
         .analysis-results {
             margin-top: 40px;
@@ -111,7 +108,6 @@
             border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
-        /* Style for color picker */
         .color-picker {
             display: none;
             position: absolute;
@@ -130,13 +126,54 @@
             margin: 5px;
             cursor: pointer;
         }
+        .shape-selector {
+            display: none;
+            position: absolute;
+            background-color: white;
+            border: 1px solid #ccc;
+            padding: 5px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 3;
+        }
+        .shape-button {
+            padding: 5px 10px;
+            margin: 5px;
+            cursor: pointer;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            background-color: #f9f9f9;
+        }
+        .shape-button:hover {
+            background-color: #eee;
+        }
+        /* Style for the pen mode selector */
+        .pen-mode-selector {
+            display: none;
+            position: absolute;
+            background-color: white;
+            border: 1px solid #ccc;
+            padding: 5px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 4;
+        }
+        .pen-mode-button {
+            padding: 5px 10px;
+            margin: 5px;
+            cursor: pointer;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            background-color: #f9f9f9;
+        }
+        .pen-mode-button:hover {
+            background-color: #eee;
+        }
     </style>
 </head>
 <body>
 
-    <!-- Homepage Button -->
-   <a href="http://127.0.0.1:5000/bac#" class="homepage-button">Go to Homepage</a>
-
+    <a href="http://127.0.0.1:5000/bac#" class="homepage-button">Go to Homepage</a>
 
     <div class="toolbar">
         <button id="zoom-in"><img src="/static/images/img.png" alt="Zoom inn"></button>
@@ -150,12 +187,22 @@
             <span class="color-option" style="background-color: blue;" data-color="blue"></span>
             <span class="color-option" style="background-color: green;" data-color="green"></span>
         </div>
-        <button id="clear-drawing"><img src="/static/images/img_7.png" alt="Slett tegning"></button> <!-- Eraser button to clear drawing -->
-        <button id="save-drawing"><img src="/static/images/img_8.png" alt="Lagre tegning"></button> <!-- Save drawing button -->
-        <button id="save-csv"><img src="/static/images/img_9.png" alt="Lagre som CSV"></button> <!-- Save as CSV button -->
+        <div class="shape-selector" id="shape-selector">
+            <button class="shape-button" data-shape="brain">Brain</button>
+            <button class="shape-button" data-shape="penumbra">Penumbra</button>
+            <button class="shape-button" data-shape="core">Core</button>
+        </div>
+        <!-- Pen mode selector -->
+        <div class="pen-mode-selector" id="pen-mode-selector">
+            <button class="pen-mode-button" data-pen-mode="normal">Normal Pen</button>
+            <button class="pen-mode-button" data-pen-mode="shape">Shape Pen</button>
+        </div>
+        <button id="clear-drawing"><img src="/static/images/img_7.png" alt="Slett tegning"></button>
+        <button id="save-drawing"><img src="/static/images/img_8.png" alt="Lagre tegning"></button>
+        <button id="save-csv"><img src="/static/images/img_9.png" alt="Lagre som CSV"></button>
         <button id="brightness-up"><img src="/static/images/img_11.png" alt="Øk lysstyrke"></button>
         <button id="brightness-down"><img src="/static/images/img_10.png" alt="Reduser lysstyrke"></button>
-        <button id="save-marks"><img src="/static/images/img_13.png" alt="Lagre markeringer"></button> <!-- New button to save markings -->
+        <button id="save-marks"><img src="/static/images/img_13.png" alt="Lagre markeringer"></button>
     </div>
 
     <div class="upload-container">
@@ -220,36 +267,35 @@
         let endPoint = null;
         let isMeasuring = false;
         let brightness = 1;
-        let drawingColor = "red"; // Default drawing color
-        let pointRadius = 5; // Radius for the filled point
+        let drawingColor = "red";
+        let pointRadius = 5;
+        let currentShape = null;
+        let currentPenMode = "normal"; // Default pen mode is normal
+        let circleStartX = null;
+        let circleStartY = null;
+        let drawnShapes = []; // Array to store drawn shapes
 
-        // Function to apply transformations to the image and canvas
         const applyTransform = (imgElement, canvasElement) => {
             imgElement.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale}) rotate(${rotation}deg)`;
             canvasElement.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale}) rotate(${rotation}deg)`;
         };
 
-        // Set up image manipulation tools
         const setupImageTools = (imgElement, canvasElement) => {
-            // Zoom In
             document.getElementById("zoom-in").addEventListener("click", () => {
                 scale += 0.1;
                 applyTransform(imgElement, canvasElement);
             });
 
-            // Zoom Out
             document.getElementById("zoom-out").addEventListener("click", () => {
                 scale = Math.max(scale - 0.1, 0.5);
                 applyTransform(imgElement, canvasElement);
             });
 
-            // Rotate Image
             document.getElementById("rotate").addEventListener("click", () => {
                 rotation += 90;
                 applyTransform(imgElement, canvasElement);
             });
 
-            // Pan Image
             imgElement.addEventListener("mousedown", (e) => {
                 if (isPanning) {
                     startX = e.clientX - currentX;
@@ -276,31 +322,27 @@
                 }
             });
 
-            // Window Level (brightness adjustment)
             document.getElementById("window-level").addEventListener("click", () => {
                 brightness += 0.1;
                 imgElement.style.filter = `brightness(${brightness})`;
             });
 
-            // Brightness Up
             document.getElementById("brightness-up").addEventListener("click", () => {
                 brightness = Math.min(brightness + 0.1, 2);
                 imgElement.style.filter = `brightness(${brightness})`;
             });
 
-            // Brightness Down
             document.getElementById("brightness-down").addEventListener("click", () => {
                 brightness = Math.max(brightness - 0.1, 0.1);
                 imgElement.style.filter = `brightness(${brightness})`;
             });
         };
 
-        // Function to start drawing on canvas
         const startDrawing = (e, canvasElement) => {
             isDrawing = true;
             lastX = e.offsetX;
             lastY = e.offsetY;
-            // Draw a filled circle
+
             const ctx = canvasElement.getContext("2d");
             ctx.fillStyle = drawingColor;
             ctx.beginPath();
@@ -311,7 +353,6 @@
             isMeasuring = false;
         };
 
-        // Function to draw on canvas
         const draw = (e, canvasElement) => {
             if (!isDrawing) return;
             const ctx = canvasElement.getContext("2d");
@@ -329,12 +370,10 @@
             lines[lines.length - 1].y2 = lastY;
         };
 
-        // Function to stop drawing
         const stopDrawing = () => {
             isDrawing = false;
         };
 
-        // Function to clear the drawing on the canvas
         const clearDrawing = () => {
             const canvasElements = document.querySelectorAll(".canvas");
             canvasElements.forEach((canvas) => {
@@ -346,9 +385,10 @@
             measuring = false;
             startPoint = null;
             endPoint = null;
+            drawnShapes = []; // Clear the drawn shapes array
+            redrawAllShapes(); // Redraw all shapes after clearing
         };
 
-        // Function to save the drawing to a file
         const saveDrawing = () => {
             const canvasElements = document.querySelectorAll(".canvas");
             canvasElements.forEach((canvas, index) => {
@@ -390,7 +430,6 @@
             });
         };
 
-        // Function to measure distance between two points
         const measureDistance = (e, canvasElement) => {
             if (!measuring && isMeasuring) {
                 measuring = true;
@@ -417,7 +456,6 @@
             }
         };
 
-        // Function to save lines to CSV file
         const saveLinesToCSV = () => {
             const csvContent = lines.map((line, index) => `${index + 1},${line.x1},${line.y1},${line.x2},${line.y2}`).join("\n");
             const blob = new Blob([csvContent], { type: "text/csv" });
@@ -428,7 +466,6 @@
             a.click();
         };
 
-        // Lagre notat
         document.getElementById("save-note").addEventListener("click", () => {
             const noteText = document.getElementById("note-textarea").value;
             const noteListUl = document.getElementById("note-list-ul");
@@ -438,25 +475,144 @@
             document.getElementById("note-textarea").value = "";
         });
 
+        // Function to draw a circle
+        const drawCircle = (ctx, x, y, radius, fillColor, strokeColor) => {
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, 2 * Math.PI);
+            if (fillColor) {
+                ctx.fillStyle = fillColor;
+                ctx.fill();
+            }
+            if (strokeColor) {
+                ctx.strokeStyle = strokeColor;
+                ctx.stroke();
+            }
+            ctx.closePath();
+        };
+
+        // Function to start drawing a circle
+        const startCircle = (e, canvasElement) => {
+            isDrawing = true;
+            circleStartX = e.offsetX;
+            circleStartY = e.offsetY;
+        };
+
+        // Function to draw a circle dynamically as the mouse moves
+        const drawDynamicCircle = (e, canvasElement) => {
+            if (!isDrawing) return;
+
+            const ctx = canvasElement.getContext("2d");
+            const x = circleStartX;
+            const y = circleStartY;
+            const radius = Math.sqrt(Math.pow(e.offsetX - x, 2) + Math.pow(e.offsetY - y, 2));
+
+            // Clear the canvas
+            ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+
+            // Redraw all previously drawn shapes
+            redrawAllShapes(canvasElement);
+
+            // Draw the new circle
+            let fillColor = null;
+            let strokeColor = null;
+
+            if (currentShape === "brain") {
+                fillColor = drawingColor;
+            } else if (currentShape === "penumbra") {
+                strokeColor = drawingColor;
+            } else if (currentShape === "core") {
+                fillColor = drawingColor;
+            }
+
+            drawCircle(ctx, x, y, radius, fillColor, strokeColor);
+        };
+
+        // Function to stop drawing the circle
+        const stopCircle = (e, canvasElement) => {
+            if (!isDrawing) return;
+            isDrawing = false;
+
+            const ctx = canvasElement.getContext("2d");
+            const x = circleStartX;
+            const y = circleStartY;
+            const radius = Math.sqrt(Math.pow(e.offsetX - x, 2) + Math.pow(e.offsetY - y, 2));
+
+            let fillColor = null;
+            let strokeColor = null;
+
+            if (currentShape === "brain") {
+                fillColor = drawingColor;
+            } else if (currentShape === "penumbra") {
+                strokeColor = drawingColor;
+            } else if (currentShape === "core") {
+                fillColor = drawingColor;
+            }
+
+            drawCircle(ctx, x, y, radius, fillColor, strokeColor);
+
+            // Store the drawn shape
+            drawnShapes.push({
+                shape: currentShape,
+                x: x,
+                y: y,
+                radius: radius,
+                fillColor: fillColor,
+                strokeColor: strokeColor
+            });
+
+            // Reset start coordinates
+            circleStartX = null;
+            circleStartY = null;
+        };
+
+        // Function to redraw all shapes
+        const redrawAllShapes = (canvasElement) => {
+            const canvasElements = document.querySelectorAll(".canvas");
+            canvasElements.forEach((canvas) => {
+                const ctx = canvas.getContext("2d");
+                drawnShapes.forEach(shape => {
+                    drawCircle(ctx, shape.x, shape.y, shape.radius, shape.fillColor, shape.strokeColor);
+                });
+            });
+        };
+
         // Activate Pen Tool for drawing
         document.getElementById("pen-tool").addEventListener("click", () => {
             const colorPicker = document.getElementById("color-picker");
+            const shapeSelector = document.getElementById("shape-selector");
+            const penModeSelector = document.getElementById("pen-mode-selector");
+
+            // Toggle visibility of color picker, shape selector, and pen mode selector
             colorPicker.style.display = colorPicker.style.display === "block" ? "none" : "block";
+            shapeSelector.style.display = shapeSelector.style.display === "block" ? "none" : "block";
+            penModeSelector.style.display = penModeSelector.style.display === "block" ? "none" : "block";
 
             const imgElement1 = document.getElementById("image-1");
             const canvasElement1 = document.getElementById("canvas-1");
             const imgElement2 = document.getElementById("image-2");
             const canvasElement2 = document.getElementById("canvas-2");
 
-            // Enable or disable pen tool drawing on both canvases
-            canvasElement1.addEventListener("mousedown", (e) => {
-                startDrawing(e, canvasElement1);
-                // Lagre koordinatene til det markerte området
+            // Remove existing event listeners
+            canvasElement1.removeEventListener("mousedown", canvasElement1.mouseDownHandler);
+            canvasElement1.removeEventListener("mousemove", canvasElement1.mouseMoveHandler);
+            canvasElement1.removeEventListener("mouseup", canvasElement1.mouseUpHandler);
+            canvasElement1.removeEventListener("mouseout", canvasElement1.mouseUpHandler);
+
+            canvasElement2.removeEventListener("mousedown", canvasElement2.mouseDownHandler);
+            canvasElement2.removeEventListener("mousemove", canvasElement2.mouseMoveHandler);
+            canvasElement2.removeEventListener("mouseup", canvasElement2.mouseUpHandler);
+            canvasElement2.removeEventListener("mouseout", canvasElement2.mouseUpHandler);
+
+            // Event listeners for drawing on canvas 1
+            canvasElement1.mouseDownHandler = (e) => {
+                if (currentPenMode === "shape" && currentShape) {
+                    startCircle(e, canvasElement1);
+                } else if (currentPenMode === "normal") {
+                    startDrawing(e, canvasElement1);
+                }
                 const x = e.offsetX;
                 const y = e.offsetY;
-                // Vis tekstboksen for å notere området
                 document.querySelector(".note-container").style.display = "block";
-                // Lagre notatet sammen med koordinatene
                 document.getElementById("save-note").addEventListener("click", () => {
                     const noteText = document.getElementById("note-textarea").value;
                     const noteListUl = document.getElementById("note-list-ul");
@@ -465,16 +621,58 @@
                     noteListUl.appendChild(noteListItem);
                     document.getElementById("note-textarea").value = "";
                 });
-            });
+            };
 
-            canvasElement1.addEventListener("mousemove", (e) => draw(e, canvasElement1));
-            canvasElement1.addEventListener("mouseup", stopDrawing);
-            canvasElement1.addEventListener("mouseout", stopDrawing);
+            canvasElement1.mouseMoveHandler = (e) => {
+                if (currentPenMode === "normal") {
+                    draw(e, canvasElement1);
+                } else if (currentPenMode === "shape" && currentShape) {
+                    drawDynamicCircle(e, canvasElement1);
+                }
+            };
 
-            canvasElement2.addEventListener("mousedown", (e) => startDrawing(e, canvasElement2));
-            canvasElement2.addEventListener("mousemove", (e) => draw(e, canvasElement2));
-            canvasElement2.addEventListener("mouseup", stopDrawing);
-            canvasElement2.addEventListener("mouseout", stopDrawing);
+            canvasElement1.mouseUpHandler = (e) => {
+                if (currentPenMode === "normal") {
+                    stopDrawing();
+                } else if (currentPenMode === "shape" && currentShape) {
+                    stopCircle(e, canvasElement1);
+                }
+            };
+
+            canvasElement1.addEventListener("mousedown", canvasElement1.mouseDownHandler);
+            canvasElement1.addEventListener("mousemove", canvasElement1.mouseMoveHandler);
+            canvasElement1.addEventListener("mouseup", canvasElement1.mouseUpHandler);
+            canvasElement1.addEventListener("mouseout", canvasElement1.mouseUpHandler);
+
+            // Event listeners for drawing on canvas 2
+            canvasElement2.mouseDownHandler = (e) => {
+                if (currentPenMode === "shape" && currentShape) {
+                    startCircle(e, canvasElement2);
+                } else if (currentPenMode === "normal") {
+                    startDrawing(e, canvasElement2);
+                }
+            };
+
+            canvasElement2.mouseMoveHandler = (e) => {
+                if (currentPenMode === "normal") {
+                    draw(e, canvasElement2);
+                } else if (currentPenMode === "shape" && currentShape) {
+                    drawDynamicCircle(e, canvasElement2);
+                }
+            };
+
+            canvasElement2.mouseUpHandler = (e) => {
+                if (currentPenMode === "normal") {
+                    stopDrawing();
+                } else if (currentPenMode === "shape" && currentShape) {
+                    stopCircle(e, canvasElement2);
+                }
+            };
+
+            canvasElement2.addEventListener("mousedown", canvasElement2.mouseDownHandler);
+            canvasElement2.addEventListener("mousemove", canvasElement2.mouseMoveHandler);
+            canvasElement2.addEventListener("mouseup", canvasElement2.mouseUpHandler);
+            canvasElement2.addEventListener("mouseout", canvasElement2.mouseUpHandler);
         });
 
         // Activate Measure Tool for measuring distance
@@ -484,7 +682,6 @@
             const imgElement2 = document.getElementById("image-2");
             const canvasElement2 = document.getElementById("canvas-2");
 
-            // Enable or disable measure tool on both canvases
             isMeasuring = true;
             canvasElement1.addEventListener("mousedown", (e) => measureDistance(e, canvasElement1));
             canvasElement2.addEventListener("mousedown", (e) => measureDistance(e, canvasElement2));
@@ -534,7 +731,27 @@
         document.getElementById("color-picker").addEventListener("click", (e) => {
             if (e.target.classList.contains("color-option")) {
                 drawingColor = e.target.dataset.color;
-                document.getElementById("color-picker").style.display = "none"; // Hide color picker after selection
+                document.getElementById("color-picker").style.display = "none";
+            }
+        });
+
+        // Shape Selector Functionality
+        document.getElementById("shape-selector").addEventListener("click", (e) => {
+            if (e.target.classList.contains("shape-button")) {
+                currentShape = e.target.dataset.shape;
+                document.getElementById("shape-selector").style.display = "none";
+            }
+        });
+
+        // Pen Mode Selector Functionality
+        document.getElementById("pen-mode-selector").addEventListener("click", (e) => {
+            if (e.target.classList.contains("pen-mode-button")) {
+                currentPenMode = e.target.dataset.penMode;
+                document.getElementById("pen-mode-selector").style.display = "none";
+                // Reset current shape when switching to normal pen mode
+                if (currentPenMode === "normal") {
+                    currentShape = null;
+                }
             }
         });
 
@@ -543,21 +760,17 @@
             const canvas1 = document.getElementById("canvas-1");
             const canvas2 = document.getElementById("canvas-2");
 
-            // Create a new canvas to combine the drawings
             const combinedCanvas = document.createElement("canvas");
-            combinedCanvas.width = Math.max(canvas1.width, canvas2.width); // Use the larger width
-            combinedCanvas.height = Math.max(canvas1.height, canvas2.height); // Use the larger height
+            combinedCanvas.width = Math.max(canvas1.width, canvas2.width);
+            combinedCanvas.height = Math.max(canvas1.height, canvas2.height);
             const combinedCtx = combinedCanvas.getContext("2d");
 
-            // Fill the background with black
             combinedCtx.fillStyle = "black";
             combinedCtx.fillRect(0, 0, combinedCanvas.width, combinedCanvas.height);
 
-            // Draw the drawings from canvas1 and canvas2 onto the combined canvas
             combinedCtx.drawImage(canvas1, 0, 0);
             combinedCtx.drawImage(canvas2, 0, 0);
 
-            // Save the combined canvas as an image
             const dataURL = combinedCanvas.toDataURL();
             const a = document.createElement("a");
             a.href = dataURL;
