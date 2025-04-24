@@ -8,7 +8,7 @@ from flask_login import UserMixin
 app = Flask(__name__)
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://Users/ashvini12/PycharmProjects/medical_imaging_app/database.db'
 app.config['SECRET_KEY'] = 'your_secret_key'
 
 

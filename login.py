@@ -22,7 +22,7 @@ app = Flask(__name__)
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 # Define the database URI using a relative path
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(basedir, "database.db")}'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:////{os.path.join(basedir, "database.db")}'
 app.config['SECRET_KEY'] = 'your_secret_key'
 print(app.config['SQLALCHEMY_DATABASE_URI'])
 
@@ -215,16 +215,36 @@ def get_image():
     value1 = request.args.get('value1')  # First value being plotted
     value2 = request.args.get('value2')  # Second value being plotted
     dimension = request.args.get('dimension')  # e.g., '2D' or '3D'
+    figure_type = request.args.get('figure_type') #Recanalized or Non-Recanalized
 
-    print(f"Received parameters: patient_category={patient_category}, value1={value1}, value2={value2}, dimension={dimension}")
+    print(f"Received parameters: patient_category={patient_category}, value1={value1}, value2={value2}, dimension={dimension}, figure_type={figure_type}")
 
     # Query the database for the image based on the parameters
-    image = HistogramImageModel.query.filter_by(
-        category=patient_category,
-        value1=value1,
-        value2=value2,
-        dimension=dimension
-    ).first()
+    # Adjust the query based on figure_type
+    if figure_type == 'Recanalized':
+        image = HistogramImageModel.query.filter_by(
+            category=patient_category,
+            value1=value1,
+            value2=value2,
+            dimension=dimension,
+            recanalization_status='Recanalized'
+        ).first()
+    elif figure_type == 'Non-Recanalized':
+        image = HistogramImageModel.query.filter_by(
+            category=patient_category,
+            value1=value1,
+            value2=value2,
+            dimension=dimension,
+            recanalization_status='NonRecanalized'
+        ).first()
+    else:
+        # If figure_type is not specified, return images regardless of recanalization status
+        image = HistogramImageModel.query.filter_by(
+            category=patient_category,
+            value1=value1,
+            value2=value2,
+            dimension=dimension
+        ).first()
 
     if image:
         print(f"Found image: {image.filename}")
@@ -232,12 +252,29 @@ def get_image():
 
     # If no image found, switch value1 and value2 and query again
     print("No image found, switching value1 and value2.")
-    image = HistogramImageModel.query.filter_by(
-        category=patient_category,
-        value1=value2,
-        value2=value1,
-        dimension=dimension
-    ).first()
+    if figure_type == 'Recanalized':
+        image = HistogramImageModel.query.filter_by(
+            category=patient_category,
+            value1=value2,
+            value2=value1,
+            dimension=dimension,
+            recanalization_status='Recanalized'
+        ).first()
+    elif figure_type == 'Non-Recanalized':
+        image = HistogramImageModel.query.filter_by(
+            category=patient_category,
+            value1=value2,
+            value2=value1,
+            dimension=dimension,
+            recanalization_status='NonRecanalized'
+        ).first()
+    else:
+        image = HistogramImageModel.query.filter_by(
+            category=patient_category,
+            value1=value2,
+            value2=value1,
+            dimension=dimension
+        ).first()
 
     if image:
         print(f"Found image after switching: {image.filename}")

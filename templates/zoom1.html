@@ -116,7 +116,7 @@
             </select>
         </div>
         <div class="dropdown-container">
-            <span class="dropdown-label">Value 1 (Figure 1):</span>
+            <span class="dropdown-label">Parameter 1 (Figure 1):</span>
             <select id="value1-1">
                 <option value="MTT">MTT</option>
                 <option value="COV">COV</option>
@@ -127,13 +127,13 @@
             </select>
         </div>
         <div class="dropdown-container">
-            <span class="dropdown-label">Value 2 (Figure 1):</span>
+            <span class="dropdown-label">Parameter 2 (Figure 1):</span>
             <select id="value2-1">
                 <option value="MTT">MTT</option>
                 <option value="COV">COV</option>
-                <option value="CTH">CTH</option>
+                <option value="CTH">CTH</CTH>
                 <option value="TTP">TTP</option>
-                <option value="CBF">CBF</option>
+                <option value="CBF">CBF</CBF>
                 <option value="TMAX">TMAX</option>
             </select>
         </div>
@@ -148,7 +148,7 @@
             <span class="dropdown-label">Figure 1 Type:</span>
             <select id="figure-1-type">
                 <option value="Recanalized">Recanalized</option>
-                <option value="Non-Treated">Non-Recanalized</option>
+                <option value="Non-Recanalized">Non-Recanalized</option>
             </select>
         </div>
 
@@ -162,24 +162,24 @@
             </select>
         </div>
         <div class="dropdown-container">
-            <span class="dropdown-label">Value 1 (Figure 2):</span>
+            <span class="dropdown-label">Parameter 1 (Figure 2):</span>
             <select id="value1-2">
                 <option value="MTT">MTT</option>
                 <option value="COV">COV</option>
-                <option value="CTH">CTH</option>
+                <option value="CTH">CTH</CTH>
                 <option value="TTP">TTP</option>
-                <option value="CBF">CBF</option>
+                <option value="CBF">CBF</CBF>
                 <option value="TMAX">TMAX</option>
             </select>
         </div>
         <div class="dropdown-container">
-            <span class="dropdown-label">Value 2 (Figure 2):</span>
+            <span class="dropdown-label">Parameter 2 (Figure 2):</span>
             <select id="value2-2">
                 <option value="MTT">MTT</option>
                 <option value="COV">COV</option>
-                <option value="CTH">CTH</option>
-                <option value="TTP">TTP</option>
-                <option value="CBF">CBF</option>
+                <option value="CTH">CTH</CTH>
+                <option value="TTP">TTP</TTP>
+                <option value="CBF">CBF</CBF>
                 <option value="TMAX">TMAX</option>
             </select>
         </div>
@@ -193,8 +193,8 @@
         <div class="dropdown-container">
             <span class="dropdown-label">Figure 2 Type:</span>
             <select id="figure-2-type">
-                <option value="Recanalized">Recanalized</
-                <option value="Non-Treated">Non-Recanalized</option>
+                <option value="Recanalized">Recanalized</option>
+                <option value="Non-Recanalized">Non-Recanalized</option>
             </select>
         </div>
 
@@ -207,11 +207,11 @@
 
     <div class="image-preview-container">
         <div class="image-container">
-            <h3>Figure 1</h3>
+            <h3 id="image-1-title">Figure 1</h3>
             <img id="image-1" alt="Preview" style="display:block;">
         </div>
         <div class="image-container">
-            <h3>Figure 2</h3>
+            <h3 id="image-2-title">Figure 2</h3>
             <img id="image-2" alt="Preview" style="display:block;">
         </div>
     </div>
@@ -240,6 +240,9 @@ document.getElementById("visualize-button").addEventListener("click", function()
 
     console.log(`Figure 1 - Patient Category: ${patientCategory1}, Value 1: ${value1_1}, Value 2: ${value2_1}, Dimension: ${dimension1}, Type: ${figure1Type}`);
 
+    // Construct the title for Figure 1
+    const title1 = `Figure 1: ${patientCategory1}, ${value1_1}, ${value2_1}, ${dimension1}, ${figure1Type}`;
+
     // Fetch image for Figure 1
     fetch(`/get_image?patient_category=${patientCategory1}&value1=${value1_1}&value2=${value2_1}&dimension=${dimension1}&figure_type=${figure1Type}`)
         .then(response => {
@@ -250,10 +253,16 @@ document.getElementById("visualize-button").addEventListener("click", function()
         })
         .then(imageBlob => {
             const imageObjectURL = URL.createObjectURL(imageBlob);
-            document.getElementById("image-1").src = imageObjectURL;
+            const imageElement = document.getElementById("image-1");
+            imageElement.src = imageObjectURL;
+
+            // Set the title
+            document.getElementById("image-1-title").textContent = title1;
         })
         .catch(error => {
             console.error(error);
+            document.getElementById("image-1-title").textContent = "Image not found"; // Set title to "Image not found" on error
+            document.getElementById("image-1").src = ""; // Clear the image
         });
 
     // Get values for Figure 2
@@ -265,6 +274,9 @@ document.getElementById("visualize-button").addEventListener("click", function()
 
     console.log(`Figure 2 - Patient Category: ${patientCategory2}, Value 1: ${value1_2}, Value 2: ${value2_2}, Dimension: ${dimension2}, Type: ${figure2Type}`);
 
+    // Construct the title for Figure 2
+    const title2 = `Figure 2: ${patientCategory2}, ${value1_2}, ${value2_2}, ${dimension2}, ${figure2Type}`;
+
     // Fetch image for Figure 2
     fetch(`/get_image?patient_category=${patientCategory2}&value1=${value1_2}&value2=${value2_2}&dimension=${dimension2}&figure_type=${figure2Type}`)
         .then(response => {
@@ -275,10 +287,16 @@ document.getElementById("visualize-button").addEventListener("click", function()
         })
         .then(imageBlob => {
             const imageObjectURL = URL.createObjectURL(imageBlob);
-            document.getElementById("image-2").src = imageObjectURL;
+            const imageElement = document.getElementById("image-2");
+            imageElement.src = imageObjectURL;
+
+            // Set the title
+            document.getElementById("image-2-title").textContent = title2;
         })
         .catch(error => {
             console.error(error);
+            document.getElementById("image-2-title").textContent = "Image not found"; // Set title to "Image not found" on error
+            document.getElementById("image-2").src = ""; // Clear the image
         });
 });
 </script>
