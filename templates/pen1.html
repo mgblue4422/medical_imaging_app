@@ -252,422 +252,496 @@
         <ul id="note-list-ul"></ul>
     </div>
 
-    <script>
-        let isDrawing = false;
-        let lastX = 0;
-        let lastY = 0;
-        let isPanning = false;
-        let startX = 0, startY = 0, currentX = 0, currentY = 0;
-        let scale = 1;
-        let rotation = 0;
-        let lines = [];
-        let measurementPoints = [];
-        let measuring = false;
-        let startPoint = null;
-        let endPoint = null;
-        let isMeasuring = false;
-        let brightness = 1;
-        let drawingColor = "red";
-        let pointRadius = 5;
-        let currentShape = null;
-        let currentPenMode = "normal"; // Default pen mode is normal
+  <script>
+    let isDrawing = false;
+    let isDragging = false;
+    let selectedShape = null;
+    let lastX = 0;
+    let lastY = 0;
+    let isPanning = false;
+    let startX = 0, startY = 0, currentX = 0, currentY = 0;
+    let scale = 1;
+    let rotation = 0;
+    let lines = [];
+    let measurementPoints = [];
+    let measuring = false;
+    let startPoint = null;
+    let endPoint = null;
+    let isMeasuring = false;
+    let brightness = 1;
+    let drawingColor = "red";
+    let pointRadius = 5;
+    let currentShape = null;
+    let currentPenMode = "normal";
+    let circleStartX = null;
+    let circleStartY = null;
+    let drawnShapes1 = [];
+    let drawnShapes2 = [];
 
-        const applyTransform = (imgElement, canvasElement) => {
-            imgElement.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale}) rotate(${rotation}deg)`;
-            canvasElement.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale}) rotate(${rotation}deg)`;
-        };
+    // Function to check if a point is inside a circle
+    const isPointInCircle = (x, y, circle) => {
+        const dx = x - circle.x;
+        const dy = y - circle.y;
+        return dx * dx + dy * dy <= circle.radius * circle.radius;
+    };
 
-        const setupImageTools = (imgElement, canvasElement) => {
-            document.getElementById("zoom-in").addEventListener("click", () => {
-                scale += 0.1;
+    // Function to find which shape was clicked
+    const findSelectedShape = (x, y, shapes) => {
+        return shapes.find(shape => isPointInCircle(x, y, shape));
+    };
+
+    const applyTransform = (imgElement, canvasElement) => {
+        imgElement.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale}) rotate(${rotation}deg)`;
+        canvasElement.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale}) rotate(${rotation}deg)`;
+    };
+
+    const setupImageTools = (imgElement, canvasElement) => {
+        document.getElementById("zoom-in").addEventListener("click", () => {
+            scale += 0.1;
+            applyTransform(imgElement, canvasElement);
+        });
+
+        document.getElementById("zoom-out").addEventListener("click", () => {
+            scale = Math.max(scale - 0.1, 0.5);
+            applyTransform(imgElement, canvasElement);
+        });
+
+        document.getElementById("rotate").addEventListener("click", () => {
+            rotation += 90;
+            applyTransform(imgElement, canvasElement);
+        });
+
+        imgElement.addEventListener("mousedown", (e) => {
+            if (isPanning) {
+                startX = e.clientX - currentX;
+                startY = e.clientY - currentY;
+                isDrawing = true;
+                imgElement.style.cursor = "grabbing";
+                e.preventDefault();
+            }
+        });
+
+        document.addEventListener("mousemove", (e) => {
+            if (isPanning && isDrawing) {
+                currentX = e.clientX - startX;
+                currentY = e.clientY - startY;
                 applyTransform(imgElement, canvasElement);
-            });
+                e.preventDefault();
+            }
+        });
 
-            document.getElementById("zoom-out").addEventListener("click", () => {
-                scale = Math.max(scale - 0.1, 0.5);
-                applyTransform(imgElement, canvasElement);
-            });
+        document.addEventListener("mouseup", () => {
+            if (isPanning) {
+                isDrawing = false;
+                imgElement.style.cursor = "grab";
+            }
+        });
+    };
 
-            document.getElementById("rotate").addEventListener("click", () => {
-                rotation += 90;
-                applyTransform(imgElement, canvasElement);
-            });
-
-            imgElement.addEventListener("mousedown", (e) => {
-                if (isPanning) {
-                    startX = e.clientX - currentX;
-                    startY = e.clientY - currentY;
-                    isDrawing = true;
-                    imgElement.style.cursor = "grabbing";
-                    e.preventDefault();
-                }
-            });
-
-            document.addEventListener("mousemove", (e) => {
-                if (isPanning && isDrawing) {
-                    currentX = e.clientX - startX;
-                    currentY = e.clientY - startY;
-                    applyTransform(imgElement, canvasElement);
-                    e.preventDefault();
-                }
-            });
-
-            document.addEventListener("mouseup", () => {
-                if (isPanning) {
-                    isDrawing = false;
-                    imgElement.style.cursor = "grab";
-                }
-            });
-
-            document.getElementById("window-level").addEventListener("click", () => {
-                brightness += 0.1;
-                imgElement.style.filter = `brightness(${brightness})`;
-            });
-
-            document.getElementById("brightness-up").addEventListener("click", () => {
-                brightness = Math.min(brightness + 0.1, 2);
-                imgElement.style.filter = `brightness(${brightness})`;
-            });
-
-            document.getElementById("brightness-down").addEventListener("click", () => {
-                brightness = Math.max(brightness - 0.1, 0.1);
-                imgElement.style.filter = `brightness(${brightness})`;
-            });
-        };
-
-        const startDrawing = (e, canvasElement) => {
-            isDrawing = true;
-            lastX = e.offsetX;
-            lastY = e.offsetY;
-
-            const ctx = canvasElement.getContext("2d");
-            ctx.fillStyle = drawingColor;
-            ctx.beginPath();
-            ctx.arc(lastX, lastY, pointRadius, 0, 2 * Math.PI);
+    const drawCircle = (ctx, x, y, radius, fillColor, strokeColor) => {
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, 2 * Math.PI);
+        if (fillColor) {
+            ctx.fillStyle = fillColor;
             ctx.fill();
-
-            lines.push({ x1: lastX, y1: lastY, x2: lastX, y2: lastY });
-            isMeasuring = false;
-        };
-
-        const draw = (e, canvasElement) => {
-            if (!isDrawing) return;
-            const ctx = canvasElement.getContext("2d");
-            ctx.strokeStyle = drawingColor;
-            ctx.lineWidth = 2;
-            ctx.lineJoin = "round";
-            ctx.lineCap = "round";
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
-            ctx.lineTo(e.offsetX, e.offsetY);
+        }
+        if (strokeColor) {
+            ctx.strokeStyle = strokeColor;
             ctx.stroke();
-            lastX = e.offsetX;
-            lastY = e.offsetY;
-            lines[lines.length - 1].x2 = lastX;
-            lines[lines.length - 1].y2 = lastY;
-        };
+        }
+        ctx.closePath();
+    };
 
-        const stopDrawing = () => {
+    const startCircle = (e, canvasElement) => {
+        const rect = canvasElement.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        const shapes = canvasElement.id === "canvas-1" ? drawnShapes1 : drawnShapes2;
+        selectedShape = findSelectedShape(x, y, shapes);
+
+        if (selectedShape) {
+            isDragging = true;
             isDrawing = false;
+        } else {
+            isDrawing = true;
+            circleStartX = x;
+            circleStartY = y;
+        }
+    };
+
+    const drawDynamicCircle = (e, canvasElement) => {
+        const ctx = canvasElement.getContext("2d");
+        const rect = canvasElement.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        if (isDragging && selectedShape) {
+            selectedShape.x = x;
+            selectedShape.y = y;
+            ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            redrawAllShapes(canvasElement);
+            return;
+        }
+
+        if (!isDrawing) return;
+
+        ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+        const radius = Math.sqrt(
+            Math.pow(x - circleStartX, 2) +
+            Math.pow(y - circleStartY, 2)
+        );
+
+        redrawAllShapes(canvasElement);
+
+        let fillColor = null;
+        let strokeColor = null;
+        if (currentShape === "brain") {
+            fillColor = drawingColor;
+        } else if (currentShape === "penumbra") {
+            strokeColor = drawingColor;
+        } else if (currentShape === "core") {
+            fillColor = drawingColor;
+        }
+
+        drawCircle(ctx, circleStartX, circleStartY, radius, fillColor, strokeColor);
+    };
+
+    const stopCircle = (e, canvasElement) => {
+        if (!isDrawing && !isDragging) return;
+
+        if (isDragging) {
+            isDragging = false;
+            selectedShape = null;
+            return;
+        }
+
+        isDrawing = false;
+        const rect = canvasElement.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        const radius = Math.sqrt(
+            Math.pow(x - circleStartX, 2) +
+            Math.pow(y - circleStartY, 2)
+        );
+
+        let fillColor = null;
+        let strokeColor = null;
+        if (currentShape === "brain") {
+            fillColor = drawingColor;
+        } else if (currentShape === "penumbra") {
+            strokeColor = drawingColor;
+        } else if (currentShape === "core") {
+            fillColor = drawingColor;
+        }
+
+        const newShape = {
+            shape: currentShape,
+            x: circleStartX,
+            y: circleStartY,
+            radius: radius,
+            fillColor: fillColor,
+            strokeColor: strokeColor
         };
 
-        const clearDrawing = () => {
-            const canvasElements = document.querySelectorAll(".canvas");
-            canvasElements.forEach((canvas) => {
-                const ctx = canvas.getContext("2d");
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (canvasElement.id === "canvas-1") {
+            drawnShapes1.push(newShape);
+        } else {
+            drawnShapes2.push(newShape);
+        }
+
+        circleStartX = null;
+        circleStartY = null;
+    };
+
+    const redrawAllShapes = (canvasElement) => {
+        const ctx = canvasElement.getContext("2d");
+        const shapes = canvasElement.id === "canvas-1" ? drawnShapes1 : drawnShapes2;
+
+        shapes.forEach(shape => {
+            drawCircle(ctx, shape.x, shape.y, shape.radius, shape.fillColor, shape.strokeColor);
+        });
+    };
+
+    const startDrawing = (e, canvasElement) => {
+        isDrawing = true;
+        lastX = e.offsetX;
+        lastY = e.offsetY;
+
+        const ctx = canvasElement.getContext("2d");
+        ctx.fillStyle = drawingColor;
+        ctx.beginPath();
+        ctx.arc(lastX, lastY, pointRadius, 0, 2 * Math.PI);
+        ctx.fill();
+
+        lines.push({ x1: lastX, y1: lastY, x2: lastX, y2: lastY });
+    };
+
+    const draw = (e, canvasElement) => {
+        if (!isDrawing) return;
+        const ctx = canvasElement.getContext("2d");
+        ctx.strokeStyle = drawingColor;
+        ctx.lineWidth = 2;
+        ctx.lineJoin = "round";
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(e.offsetX, e.offsetY);
+        ctx.stroke();
+        lastX = e.offsetX;
+        lastY = e.offsetY;
+        lines[lines.length - 1].x2 = lastX;
+        lines[lines.length - 1].y2 = lastY;
+    };
+
+    const stopDrawing = () => {
+        isDrawing = false;
+    };
+
+    const clearDrawing = () => {
+        const canvasElements = document.querySelectorAll(".canvas");
+        canvasElements.forEach((canvas) => {
+            const ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        });
+        lines = [];
+        measurementPoints = [];
+        measuring = false;
+        startPoint = null;
+        endPoint = null;
+        drawnShapes1 = [];
+        drawnShapes2 = [];
+    };
+
+    const saveDrawing = () => {
+        const canvasElements = document.querySelectorAll(".canvas");
+        canvasElements.forEach((canvas, index) => {
+            const dataURL = canvas.toDataURL();
+            const a = document.createElement("a");
+            a.href = dataURL;
+            const fileTypes = ["png", "jpg", "jpeg", "gif", "bmp", "svg"];
+            const fileTypeSelect = document.createElement("select");
+            fileTypes.forEach((fileType) => {
+                const option = document.createElement("option");
+                option.value = fileType;
+                option.textContent = fileType.toUpperCase();
+                fileTypeSelect.appendChild(option);
             });
-            lines = [];
-            measurementPoints = [];
+            const fileTypeLabel = document.createElement("label");
+            fileTypeLabel.textContent = "Choose datatype:";
+            fileTypeLabel.appendChild(fileTypeSelect);
+            const fileNameInput = document.createElement("input");
+            fileNameInput.type = "text";
+            fileNameInput.placeholder = "Filename (eks. min_bilde)";
+            const fileTypeContainer = document.createElement("div");
+            fileTypeContainer.appendChild(fileTypeLabel);
+            fileTypeContainer.appendChild(fileNameInput);
+            document.body.appendChild(fileTypeContainer);
+            const saveButton = document.createElement("button");
+            saveButton.textContent = "Save";
+            saveButton.addEventListener("click", () => {
+                const selectedFileType = fileTypeSelect.value;
+                const fileName = fileNameInput.value;
+                if (fileName) {
+                    a.download = `${fileName}.${selectedFileType}`;
+                } else {
+                    a.download = `drawing-${index + 1}.${selectedFileType}`;
+                }
+                a.click();
+                document.body.removeChild(fileTypeContainer);
+            });
+            fileTypeContainer.appendChild(saveButton);
+        });
+    };
+
+    const measureDistance = (e, canvasElement) => {
+        if (!measuring && isMeasuring) {
+            measuring = true;
+            startPoint = { x: e.offsetX, y: e.offsetY };
+            const ctx = canvasElement.getContext("2d");
+            ctx.fillStyle = "#FF0000";
+            ctx.beginPath();
+            ctx.arc(e.offsetX, e.offsetY, 5, 0, 2 * Math.PI);
+            ctx.fill();
+        } else if (measuring && isMeasuring) {
+            endPoint = { x: e.offsetX, y: e.offsetY };
+            const ctx = canvasElement.getContext("2d");
+            ctx.strokeStyle = "#FF0000";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(startPoint.x, startPoint.y);
+            ctx.lineTo(endPoint.x, endPoint.y);
+            ctx.stroke();
+            const distance = Math.sqrt(Math.pow(endPoint.x - startPoint.x, 2) + Math.pow(endPoint.y - startPoint.y, 2));
+            alert(`Avstand: ${distance.toFixed(2)} piksler`);
             measuring = false;
             startPoint = null;
             endPoint = null;
-        };
+        }
+    };
 
-        const saveDrawing = () => {
-            const canvasElements = document.querySelectorAll(".canvas");
-            canvasElements.forEach((canvas, index) => {
-                const dataURL = canvas.toDataURL();
-                const a = document.createElement("a");
-                a.href = dataURL;
-                const fileTypes = ["png", "jpg", "jpeg", "gif", "bmp", "svg"];
-                const fileTypeSelect = document.createElement("select");
-                fileTypes.forEach((fileType) => {
-                    const option = document.createElement("option");
-                    option.value = fileType;
-                    option.textContent = fileType.toUpperCase();
-                    fileTypeSelect.appendChild(option);
-                });
-                const fileTypeLabel = document.createElement("label");
-                fileTypeLabel.textContent = "Choose datatype:";
-                fileTypeLabel.appendChild(fileTypeSelect);
-                const fileNameInput = document.createElement("input");
-                fileNameInput.type = "text";
-                fileNameInput.placeholder = "Filename (eks. min_bilde)";
-                const fileTypeContainer = document.createElement("div");
-                fileTypeContainer.appendChild(fileTypeLabel);
-                fileTypeContainer.appendChild(fileNameInput);
-                document.body.appendChild(fileTypeContainer);
-                const saveButton = document.createElement("button");
-                saveButton.textContent = "Save";
-                saveButton.addEventListener("click", () => {
-                    const selectedFileType = fileTypeSelect.value;
-                    const fileName = fileNameInput.value;
-                    if (fileName) {
-                        a.download = `${fileName}.${selectedFileType}`;
-                    } else {
-                        a.download = `drawing-${index + 1}.${selectedFileType}`;
-                    }
-                    a.click();
-                    document.body.removeChild(fileTypeContainer);
-                });
-                fileTypeContainer.appendChild(saveButton);
-            });
-        };
+    const saveLinesToCSV = () => {
+        const csvContent = lines.map((line, index) => `${index + 1},${line.x1},${line.y1},${line.x2},${line.y2}`).join("\n");
+        const blob = new Blob([csvContent], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "lines.csv";
+        a.click();
+    };
 
-        const measureDistance = (e, canvasElement) => {
-            if (!measuring && isMeasuring) {
-                measuring = true;
-                startPoint = { x: e.offsetX, y: e.offsetY };
-                const ctx = canvasElement.getContext("2d");
-                ctx.fillStyle = "#FF0000";
-                ctx.beginPath();
-                ctx.arc(e.offsetX, e.offsetY, 5, 0, 2 * Math.PI);
-                ctx.fill();
-            } else if (measuring && isMeasuring) {
-                endPoint = { x: e.offsetX, y: e.offsetY };
-                const ctx = canvasElement.getContext("2d");
-                ctx.strokeStyle = "#FF0000";
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(startPoint.x, startPoint.y);
-                ctx.lineTo(endPoint.x, endPoint.y);
-                ctx.stroke();
-                const distance = Math.sqrt(Math.pow(endPoint.x - startPoint.x, 2) + Math.pow(endPoint.y - startPoint.y, 2));
-                alert(`Avstand: ${distance.toFixed(2)} piksler`);
-                measuring = false;
-                startPoint = null;
-                endPoint = null;
-            }
-        };
+    // Event Listeners
+    document.getElementById("pen-tool").addEventListener("click", () => {
+        const colorPicker = document.getElementById("color-picker");
+        const shapeSelector = document.getElementById("shape-selector");
+        const penModeSelector = document.getElementById("pen-mode-selector");
 
-        const saveLinesToCSV = () => {
-            const csvContent = lines.map((line, index) => `${index + 1},${line.x1},${line.y1},${line.x2},${line.y2}`).join("\n");
-            const blob = new Blob([csvContent], { type: "text/csv" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "lines.csv";
-            a.click();
-        };
+        colorPicker.style.display = colorPicker.style.display === "block" ? "none" : "block";
+        shapeSelector.style.display = shapeSelector.style.display === "block" ? "none" : "block";
+        penModeSelector.style.display = penModeSelector.style.display === "block" ? "none" : "block";
 
-        document.getElementById("save-note").addEventListener("click", () => {
-            const noteText = document.getElementById("note-textarea").value;
-            const noteListUl = document.getElementById("note-list-ul");
-            const noteListItem = document.createElement("li");
-            noteListItem.textContent = noteText;
-            noteListUl.appendChild(noteListItem);
-            document.getElementById("note-textarea").value = "";
-        });
+        const canvasElements = document.querySelectorAll(".canvas");
+        canvasElements.forEach(canvas => {
+            canvas.removeEventListener("mousedown", canvas.mouseDownHandler);
+            canvas.removeEventListener("mousemove", canvas.mouseMoveHandler);
+            canvas.removeEventListener("mouseup", canvas.mouseUpHandler);
+            canvas.removeEventListener("mouseout", canvas.mouseUpHandler);
 
-        const drawShape = (e, canvasElement) => {
-            if (!currentShape) return;
-
-            const ctx = canvasElement.getContext("2d");
-            ctx.fillStyle = drawingColor;
-            ctx.strokeStyle = drawingColor;
-
-            const x = e.offsetX;
-            const y = e.offsetY;
-
-            ctx.beginPath();
-
-            switch (currentShape) {
-                case "brain":
-                    ctx.arc(x, y, 50, 0, 2 * Math.PI);
-                    ctx.fill();
-                    break;
-                case "penumbra":
-                    ctx.arc(x, y, 30, 0, 2 * Math.PI);
-                    ctx.stroke();
-                    break;
-                case "core":
-                    ctx.arc(x + 10, y + 10, 5, 0, 2 * Math.PI);
-                    ctx.fill();
-                    ctx.arc(x - 10, y - 10, 5, 0, 2 * Math.PI);
-                    ctx.fill();
-                    ctx.arc(x + 5, y - 5, 5, 0, 2 * Math.PI);
-                    ctx.fill();
-                    break;
-            }
-
-            ctx.closePath();
-        };
-
-        // Activate Pen Tool for drawing
-        document.getElementById("pen-tool").addEventListener("click", () => {
-            const colorPicker = document.getElementById("color-picker");
-            const shapeSelector = document.getElementById("shape-selector");
-            const penModeSelector = document.getElementById("pen-mode-selector");
-
-            // Toggle visibility of color picker, shape selector, and pen mode selector
-            colorPicker.style.display = colorPicker.style.display === "block" ? "none" : "block";
-            shapeSelector.style.display = shapeSelector.style.display === "block" ? "none" : "block";
-            penModeSelector.style.display = penModeSelector.style.display === "block" ? "none" : "block";
-
-            const imgElement1 = document.getElementById("image-1");
-            const canvasElement1 = document.getElementById("canvas-1");
-            const imgElement2 = document.getElementById("image-2");
-            const canvasElement2 = document.getElementById("canvas-2");
-
-            // Event listeners for drawing on canvas 1
-            canvasElement1.addEventListener("mousedown", (e) => {
+            canvas.mouseDownHandler = (e) => {
                 if (currentPenMode === "shape" && currentShape) {
-                    drawShape(e, canvasElement1);
+                    startCircle(e, canvas);
                 } else if (currentPenMode === "normal") {
-                    startDrawing(e, canvasElement1);
+                    startDrawing(e, canvas);
                 }
-                const x = e.offsetX;
-                const y = e.offsetY;
-                document.querySelector(".note-container").style.display = "block";
-                document.getElementById("save-note").addEventListener("click", () => {
-                    const noteText = document.getElementById("note-textarea").value;
-                    const noteListUl = document.getElementById("note-list-ul");
-                    const noteListItem = document.createElement("li");
-                    noteListItem.textContent = `(${x}, ${y}): ${noteText}`;
-                    noteListUl.appendChild(noteListItem);
-                    document.getElementById("note-textarea").value = "";
-                });
-            });
-
-            canvasElement1.addEventListener("mousemove", (e) => {
-                if (currentPenMode === "normal") {
-                    draw(e, canvasElement1);
-                }
-            });
-            canvasElement1.addEventListener("mouseup", stopDrawing);
-            canvasElement1.addEventListener("mouseout", stopDrawing);
-
-            // Event listeners for drawing on canvas 2
-            canvasElement2.addEventListener("mousedown", (e) => {
-                if (currentPenMode === "shape" && currentShape) {
-                    drawShape(e, canvasElement2);
-                } else if (currentPenMode === "normal") {
-                    startDrawing(e, canvasElement2);
-                }
-            });
-
-            canvasElement2.addEventListener("mousemove", (e) => {
-                if (currentPenMode === "normal") {
-                    draw(e, canvasElement2);
-                }
-            });
-            canvasElement2.addEventListener("mouseup", stopDrawing);
-            canvasElement2.addEventListener("mouseout", stopDrawing);
-        });
-
-        // Activate Measure Tool for measuring distance
-        document.getElementById("measure").addEventListener("click", () => {
-            const imgElement1 = document.getElementById("image-1");
-            const canvasElement1 = document.getElementById("canvas-1");
-            const imgElement2 = document.getElementById("image-2");
-            const canvasElement2 = document.getElementById("canvas-2");
-
-            isMeasuring = true;
-            canvasElement1.addEventListener("mousedown", (e) => measureDistance(e, canvasElement1));
-            canvasElement2.addEventListener("mousedown", (e) => measureDistance(e, canvasElement2));
-        });
-
-        // Clear Drawing on Button Click
-        document.getElementById("clear-drawing").addEventListener("click", clearDrawing);
-
-        // Save Drawing on Button Click
-        document.getElementById("save-drawing").addEventListener("click", saveDrawing);
-
-        // Save Lines to CSV on Button Click
-        document.getElementById("save-csv").addEventListener("click", saveLinesToCSV);
-
-        // Image Upload and Rendering
-        document.getElementById("image-upload-1").addEventListener("change", (e) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const imgElement = document.getElementById("image-1");
-                const canvasElement = document.getElementById("canvas-1");
-                imgElement.src = e.target.result;
-                imgElement.onload = () => {
-                    canvasElement.width = imgElement.width;
-                    canvasElement.height = imgElement.height;
-                    setupImageTools(imgElement, canvasElement);
-                };
             };
-            reader.readAsDataURL(e.target.files[0]);
-        });
 
-        document.getElementById("image-upload-2").addEventListener("change", (e) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const imgElement = document.getElementById("image-2");
-                const canvasElement = document.getElementById("canvas-2");
-                imgElement.src = e.target.result;
-                imgElement.onload = () => {
-                    canvasElement.width = imgElement.width;
-                    canvasElement.height = imgElement.height;
-                    setupImageTools(imgElement, canvasElement);
-                };
-            };
-            reader.readAsDataURL(e.target.files[0]);
-        });
-
-        // Color Picker Functionality
-        document.getElementById("color-picker").addEventListener("click", (e) => {
-            if (e.target.classList.contains("color-option")) {
-                drawingColor = e.target.dataset.color;
-                document.getElementById("color-picker").style.display = "none";
-            }
-        });
-
-        // Shape Selector Functionality
-        document.getElementById("shape-selector").addEventListener("click", (e) => {
-            if (e.target.classList.contains("shape-button")) {
-                currentShape = e.target.dataset.shape;
-                document.getElementById("shape-selector").style.display = "none";
-            }
-        });
-
-        // Pen Mode Selector Functionality
-        document.getElementById("pen-mode-selector").addEventListener("click", (e) => {
-            if (e.target.classList.contains("pen-mode-button")) {
-                currentPenMode = e.target.dataset.penMode;
-                document.getElementById("pen-mode-selector").style.display = "none";
-                // Reset current shape when switching to normal pen mode
-                if (currentPenMode === "normal") {
-                    currentShape = null;
+            canvas.mouseMoveHandler = (e) => {
+                if (currentPenMode === "normal" && isDrawing) {
+                    draw(e, canvas);
+                } else if (currentPenMode === "shape" && (isDrawing || isDragging)) {
+                    drawDynamicCircle(e, canvas);
                 }
+            };
+
+            canvas.mouseUpHandler = (e) => {
+                if (currentPenMode === "normal") {
+                    stopDrawing();
+                } else if (currentPenMode === "shape") {
+                    stopCircle(e, canvas);
+                }
+            };
+
+            canvas.addEventListener("mousedown", canvas.mouseDownHandler);
+            canvas.addEventListener("mousemove", canvas.mouseMoveHandler);
+            canvas.addEventListener("mouseup", canvas.mouseUpHandler);
+            canvas.addEventListener("mouseout", canvas.mouseUpHandler);
+        });
+    });
+
+    document.getElementById("measure").addEventListener("click", () => {
+        isMeasuring = true;
+        const canvasElements = document.querySelectorAll(".canvas");
+        canvasElements.forEach(canvas => {
+            canvas.addEventListener("mousedown", (e) => measureDistance(e, canvas));
+        });
+    });
+
+    document.getElementById("clear-drawing").addEventListener("click", clearDrawing);
+    document.getElementById("save-drawing").addEventListener("click", saveDrawing);
+    document.getElementById("save-csv").addEventListener("click", saveLinesToCSV);
+
+    // Color Picker Event Listener
+    document.getElementById("color-picker").addEventListener("click", (e) => {
+        if (e.target.classList.contains("color-option")) {
+            drawingColor = e.target.dataset.color;
+            document.getElementById("color-picker").style.display = "none";
+        }
+    });
+
+    // Shape Selector Event Listener
+    document.getElementById("shape-selector").addEventListener("click", (e) => {
+        if (e.target.classList.contains("shape-button")) {
+            currentShape = e.target.dataset.shape;
+            document.getElementById("shape-selector").style.display = "none";
+        }
+    });
+
+    // Pen Mode Selector Event Listener
+    document.getElementById("pen-mode-selector").addEventListener("click", (e) => {
+        if (e.target.classList.contains("pen-mode-button")) {
+            currentPenMode = e.target.dataset.penMode;
+            document.getElementById("pen-mode-selector").style.display = "none";
+            if (currentPenMode === "normal") {
+                currentShape = null;
             }
-        });
+        }
+    });
 
-        // Function to save markings as a single image
-        document.getElementById("save-marks").addEventListener("click", () => {
-            const canvas1 = document.getElementById("canvas-1");
-            const canvas2 = document.getElementById("canvas-2");
+    // Image Upload Event Listeners
+    document.getElementById("image-upload-1").addEventListener("change", (e) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const imgElement = document.getElementById("image-1");
+            const canvasElement = document.getElementById("canvas-1");
+            imgElement.src = e.target.result;
+            imgElement.onload = () => {
+                canvasElement.width = imgElement.width;
+                canvasElement.height = imgElement.height;
+                setupImageTools(imgElement, canvasElement);
+            };
+        };
+        reader.readAsDataURL(e.target.files[0]);
+    });
 
-            const combinedCanvas = document.createElement("canvas");
-            combinedCanvas.width = Math.max(canvas1.width, canvas2.width);
-            combinedCanvas.height = Math.max(canvas1.height, canvas2.height);
-            const combinedCtx = combinedCanvas.getContext("2d");
+    document.getElementById("image-upload-2").addEventListener("change", (e) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const imgElement = document.getElementById("image-2");
+            const canvasElement = document.getElementById("canvas-2");
+            imgElement.src = e.target.result;
+            imgElement.onload = () => {
+                canvasElement.width = imgElement.width;
+                canvasElement.height = imgElement.height;
+                setupImageTools(imgElement, canvasElement);
+            };
+        };
+        reader.readAsDataURL(e.target.files[0]);
+    });
 
-            combinedCtx.fillStyle = "black";
-            combinedCtx.fillRect(0, 0, combinedCanvas.width, combinedCanvas.height);
+    // Save Marks Event Listener
+    document.getElementById("save-marks").addEventListener("click", () => {
+        const canvas1 = document.getElementById("canvas-1");
+        const canvas2 = document.getElementById("canvas-2");
 
-            combinedCtx.drawImage(canvas1, 0, 0);
-            combinedCtx.drawImage(canvas2, 0, 0);
+        const combinedCanvas = document.createElement("canvas");
+        combinedCanvas.width = Math.max(canvas1.width, canvas2.width);
+        combinedCanvas.height = Math.max(canvas1.height, canvas2.height);
+        const combinedCtx = combinedCanvas.getContext("2d");
 
-            const dataURL = combinedCanvas.toDataURL();
-            const a = document.createElement("a");
-            a.href = dataURL;
-            a.download = "combined_markings.png";
-            a.click();
-        });
-    </script>
+        combinedCtx.fillStyle = "black";
+        combinedCtx.fillRect(0, 0, combinedCanvas.width, combinedCanvas.height);
+
+        combinedCtx.drawImage(canvas1, 0, 0);
+        combinedCtx.drawImage(canvas2, 0, 0);
+
+        const dataURL = combinedCanvas.toDataURL();
+        const a = document.createElement("a");
+        a.href = dataURL;
+        a.download = "combined_markings.png";
+        a.click();
+    });
+
+    // Note Saving Event Listener
+    document.getElementById("save-note").addEventListener("click", () => {
+        const noteText = document.getElementById("note-textarea").value;
+        const noteListUl = document.getElementById("note-list-ul");
+        const noteListItem = document.createElement("li");
+        noteListItem.textContent = noteText;
+        noteListUl.appendChild(noteListItem);
+        document.getElementById("note-textarea").value = "";
+    });
+</script>
+
 </body>
 </html>
