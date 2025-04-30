@@ -113,9 +113,10 @@
             z-index: 1;
         }
         .img-container {
-    flex: 1; /* Allow the container to grow */
-    margin: 10px; /* Add margin around each image container */
-    text-align: center; /* Center the label text */
+            flex: 1; /* Allow the container to grow */
+            margin: 10px; /* Add margin around each image container */
+            text-align: center; /* Center the label text */
+        }
         .nav-button {
             background-color: #6db3f2;
             color: white;
@@ -175,15 +176,22 @@
     <div class="container">
         <div class="header">
             Medical Case Dashboard
-            <button id="toggle-sidebar" style="margin-left: 10px; background-color: #6db3f2; border: none; color: white; padding: 0.8em; border-radius: 5px; cursor: pointer;">Toggle Sidebar</button>
+            <button id="toggle-sidebar" style="margin-left: 10px; background-color: #6db3f2; border: none; color: white; padding: 0.8em; border-radius: 5px; cursor: pointer;"></button>
         </div>
         <div class="content">
             <div class="sidebar">
                 <ul>
                     <li data-feature="case-analysis">Case Analysis</li>
                     <li data-feature="patient-info">Patient Information</li>
-                    <li data-feature="doctor-notes">Doctor's Notes</li>
                     <li data-feature="Segmentation">Segmentation</li>
+        <li>
+  <a href="{{ url_for('bac') }}" style="text-decoration: none; color: inherit;">Back to BAC</a>
+</li>
+                    <li data-feature="doctor-notes">  </li>
+
+
+
+
 
 
                 </ul>
@@ -366,8 +374,15 @@ async function fetchSlices(fileType, isSecondCarousel = false) {
         return [];
     }
     const data = await response.json();
-    console.log('Fetched slices:', data.slices); // Log the fetched slices
-    return data.slices;
+    if (data.slices) {
+        console.log('Fetched slices:', data.slices); // Log the fetched slices
+        return data.slices;
+    } else if (Array.isArray(data)) {
+        return data// just the base64 strings
+    } else {
+        console.error('Unexpected data format:', data);
+        return [];
+    }
 }
 
 // Initialize both carousels based on the selected file type
@@ -419,13 +434,30 @@ function displayImages(carousel, imageCounter, images, currentIndex) {
     carousel.innerHTML = '';
     imageCounter.textContent = `${currentIndex + 1}/${images.length}`;
 
+    console.log('Images array:', images);
+console.log('Images[0]:', images[0]);
+console.log('Type of images:', typeof images);
+
+
     for (let i = 0; i < 4; i++) {
         const index = (currentIndex + i) % images.length;
         const imgContainer = document.createElement('div');
         const img = document.createElement('img');
         const label = document.createElement('div');
+console.log('Image at index', index, images[index]);
+        // Check if the image is a base64 object or a string path
+        if (typeof images[index] === 'string' && images[index].startsWith('data:image')) {
+    img.src = images[index]; // base64, already good
 
-        img.src = `http://127.0.0.1:5000/${images[index]}`; // Adjust this if needed
+
+} else if (typeof images[index] === 'string') {
+    img.src = `http://127.0.0.1:5000/${images[index]}`; // treat as path
+} else {
+    console.error('Unknown image format:', images[index]);
+}
+
+
+
         console.log('Displaying image:', img.src); // Log the image source
         label.textContent = `Image ${index + 1}`;
         label.classList.add('image-label');

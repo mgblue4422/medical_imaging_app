@@ -1,5 +1,5 @@
 import os
-import pandas as pd
+import csv
 from flask import Flask , request , jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import LargeBinary
@@ -291,6 +291,66 @@ def upload_patient_folders():
     except Exception as e:
         print(f"An error occurred: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+
+
+def upload_patients_from_csv(csv_path):
+    with open(csv_path, 'r') as file:
+        reader = csv.reader(file)
+        header = next(reader)  # Skip header row
+
+        for row in reader:
+            ctp_path = row[0]
+            if not ctp_path:
+                continue
+
+            # Extract patient name from path (CTP_XX_XXX) and append '_DCM'
+            try:
+                base_name = next(part for part in ctp_path.split('/') if part.startswith('CTP_'))
+                patient_name = f"{base_name}_DCM"
+            except StopIteration:
+                print(f"Could not extract patient name from path: {ctp_path}")
+                continue
+
+            # Check if patient already exists
+            existing_patient = Patient.query.filter_by(patient_name=patient_name).first()
+            if existing_patient:
+                print(f"Patient {patient_name} already exists, skipping.")
+                continue
+
+            # Create and add the new patient
+            patient = Patient(patient_name=patient_name)
+            db1.session.add(patient)
+            db1.session.flush()  # Get patient.id without committing yet
+
+            # Add the CTP file entry
+            ctp_file = CTPFile(
+                filename=os.path.basename(ctp_path),
+                patient_id=patient.id,
+                file_path=ctp_path,
+                is_folder=True
+            )
+            db1.session.add(ctp_file)
+
+        try:
+            db1.session.commit()
+            print("Upload completed successfully.")
+        except Exception as e:
+            print(f"Error committing to database: {e}")
+            db1.session.rollback()
+
+
+@app.route('/upload_patients_from_csv')
+def upload_patients_from_csv_route():
+    csv_path = '/Users/g/Desktop/sus_ctp_foldernames(in).csv'  # Replace with your actual CSV path
+    try:
+        upload_patients_from_csv(csv_path)
+        return 'Patients and CTP folders uploaded successfully.', 200
+    except Exception as e:
+        return f'Error during upload: {str(e)}', 500
+
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)

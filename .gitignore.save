@@ -1,0 +1,5 @@
+vim .gitignore
+
+echo "temp_files/" >> .gitignore
+
+

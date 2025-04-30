@@ -258,7 +258,7 @@
 
         <ul>
             {% if session.get('logged_in') %}
-                <li>Welcome, {{ session.get('username') }}!</li>
+                <li>Welcome!</li>
                 <li><a href="{{ url_for('logout') }}">Logout</a></li>
             {% else %}
                 <li><a href="{{ url_for('login') }}">Login</a></li>
@@ -275,7 +275,7 @@
                 <img src="../static/images/6126663.png" height="250" style="float: right;">
                 <button style="background-color: #ff65ad; color: #fff; padding: 10px 20px; border: none; border-radius: 5px; font-size: 1em;">Learn More</button> <!-- Button fixed -->
             </div>
-            <img src="https://via.placeholder.com/400" alt="Doctor">
+            <!-- <img src="https://via.placeholder.com/400" alt="Doctor"> -->
         </section>
 
         <!-- Services Section -->

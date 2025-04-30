@@ -327,32 +327,38 @@ def search_images():
     return jsonify(matching_files)  # Return the list of matching files as JSON
 
 
-
-
 @app.route('/add_patient', methods=['GET', 'POST'])
 def add_patient():
+    print("Entered add_patient route.")  # Track entry
     form = PatientForm()
+
     if form.validate_on_submit():
+        print("Form validated successfully.")  # Track form validation
+
         patient_name = form.patient_name.data
+        print(f"Patient name received: {patient_name}")
+
         patient = Patient(patient_name=patient_name)
         db1.session.add(patient)
         db1.session.commit()
+        print(f"Patient {patient_name} committed to database.")
 
         # Handle CSV file
-        if form.csv_file.data:  # Check if a CSV file has been uploaded
-            csv_file = form.csv_file.data  # Get the uploaded file object
-            new_csv = CSVFile(filename=csv_file.filename, patient_id=patient.id,
-                              file_data=csv_file.read())  # Create a new CSVFile object with filename, patient ID, and file data
+        if form.csv_file.data:
+            print("CSV file detected.")  # Track CSV detection
+            csv_file = form.csv_file.data
+            new_csv = CSVFile(filename=csv_file.filename, patient_id=patient.id, file_data=csv_file.read())
 
-            # Add the new CSVFile object to the session and commit
-            db1.session.add(new_csv)  # Add the new_csv object to the database session
-            db1.session.commit()  # Commit the session to save the new_csv object to the database
+            db1.session.add(new_csv)
+            db1.session.commit()
+            print(f"CSV file {csv_file.filename} saved to database.")
 
-            # Define the target path for the CSV file
-            csv_file_path = os.path.join(BASE_FOLDER_PATH,
-                                         csv_file.filename)  # Create a file path for saving the uploaded file on the file system
-            # Save the file to the target path (optional, if you want to keep a copy on the file system)
-            csv_file.save(csv_file_path)  # Save the uploaded file to the specified path on the file system
+            csv_file_path = os.path.join(BASE_FOLDER_PATH, csv_file.filename)
+            csv_file.save(csv_file_path)
+            print(f"CSV file {csv_file.filename} saved to filesystem at {csv_file_path}.")
+
+        else:
+            print("No CSV file uploaded.")  # Track missing CSV
 
         # Handle other files
         file_types = {
@@ -368,27 +374,40 @@ def add_patient():
         for field_name, model in file_types.items():
             file = getattr(form, field_name).data
             if file:
-                # Define the target path for the file
+                print(f"Detected file for {field_name}: {file.filename}")  # Track file detection
+
                 file_path = os.path.join(BASE_FOLDER_PATH, file.filename)
-
-                # Save the file to the target path
                 file.save(file_path)
+                print(f"Saved {file.filename} to filesystem.")
 
-                # Create a new instance of the corresponding model
                 new_file = model(filename=file.filename, patient_id=patient.id, file_path=file_path)
                 db1.session.add(new_file)
 
-                # Commit the session to save the record in the database
                 try:
                     db1.session.commit()
+                    print(f"File {file.filename} committed to database.")
                 except Exception as e:
-                    print(f"Error committing to the database: {e}")
-                    db1.session.rollback()  # Rollback in case of error
+                    print(f"Error committing {file.filename} to the database: {e}")
+                    db1.session.rollback()
+
+            else:
+                print(f"No file uploaded for {field_name}.")  # Track missing file
 
         flash('Patient data added successfully!', 'success')
         return redirect(url_for('add_patient'))
 
+    else:
+        print("Form validation failed or method is GET.")  # Track failed form
+        print("Form errors:", form.errors)
+
     return render_template('add_patient.html', form=form)
+
+
+ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'tif', 'tiff', 'nii', 'nii.gz', 'dcm'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 
 if __name__ == '__main__':

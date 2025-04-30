@@ -8,8 +8,13 @@ import numpy as np
 from PIL import Image
 import pandas as pd
 from io import BytesIO
+import pydicom
+import io
+import base64
 import os
+import paramiko
 from forms import PatientForm
+from config import SFTP_HOST, SFTP_PORT, SFTP_USERNAME, SFTP_PASSWORD  # Import credentials
 
 
 
@@ -135,7 +140,7 @@ def get_notes_for_case(patient_name):
     else:
         return jsonify({"message": "Patient not found."}), 404
 
-
+#slices  with no overlay
 @patients_bp.route('/slices2/<patient_name>/<file_type>', methods=['GET'])
 def get_slices2(patient_name, file_type):
     # Query the Patient by name
@@ -167,6 +172,20 @@ def get_slices2(patient_name, file_type):
         return jsonify({'error': f'{file_type.upper()} file not found for patient {patient_name}'}), 404
     # Use the file path directly from the file_record
     file_path = file_record.file_path
+
+    # Check if the file path is remote
+    if is_remote_file(file_path):
+        return handle_remote_file(file_path, patient_name, file_type)
+
+
+    if not os.path.isfile(file_path):
+        return jsonify({'error': 'Provided path is not a valid file'}), 400
+
+    # Check if it's a DICOM file
+    if file_path.endswith('.dcm') or not os.path.splitext(file_path)[1]:  # handles no-extension
+        return process_dicom_file(file_path)
+    # Continue with the existing logic for local files
+
 
     # Load the NIfTI file
     img = nib.load(file_path)
@@ -247,6 +266,7 @@ def get_slices2(patient_name, file_type):
 @patients_bp.route('/slices/<patient_name>/<file_type>', methods=['GET'])
 def get_slices(patient_name, file_type):
     # Query the Patient by name
+    print(f"Request made for patient: {patient_name}, file type: {file_type}")
     patient = Patient.query.filter_by(patient_name=patient_name).first()
     if not patient:
         return jsonify({'error': 'Patient not found'}), 404
@@ -285,99 +305,259 @@ def get_slices(patient_name, file_type):
     # Use the file path directly from the file_record
     file_path = file_record.file_path
 
-    # Load the NIfTI file
-    img = nib.load(file_path)
-    data = img.get_fdata()  # Load the data from the NIfTI file
+    # Check if the file path is remote
+    if is_remote_file(file_path):
+        return handle_remote_file(file_path, patient_name, file_type, ground_truth_file)
+    else:
+    # Continue with the existing logic for local files
 
-    if file_type == 'ctp':
-        data = data[:, :, :, 0]  # Use the first 3D volume from the 4D data
+        # Load the NIfTI file
+        img = nib.load(file_path)
+        data = img.get_fdata()  # Load the data from the NIfTI file
 
-    def normalize(data, vmin=None, vmax=None):
-        if vmin is None:
-            vmin = np.min(data)
-        if vmax is None:
-            vmax = np.max(data)
-        return np.clip((data - vmin) / (vmax - vmin), 0, 1)
+        if file_type == 'ctp':
+            data = data[:, :, :, 0]  # Use the first 3D volume from the 4D data
 
-    # Define normalization parameters for each file type
-    normalization_params = {
-        'cbf': (0, 100),
-        'cbv': (0, 5),
-        'mtt': (7, 13),
-        'tmax': (2, 10),
-        'cta': (0, 100),
-        'ctp': (0, 100)
-    }
+        def normalize(data, vmin=None, vmax=None):
+            if vmin is None:
+                vmin = np.min(data)
+            if vmax is None:
+                vmax = np.max(data)
+            return np.clip((data - vmin) / (vmax - vmin), 0, 1)
 
-    # Generate paths for all slices
-    slice_paths = []
+        # Define normalization parameters for each file type
+        normalization_params = {
+            'cbf': (0, 100),
+            'cbv': (0, 5),
+            'mtt': (7, 13),
+            'tmax': (2, 10),
+            'cta': (0, 100),
+            'ctp': (0, 100)
+        }
 
-    for slice_index in range(data.shape[2]):  # Assuming the third dimension is the slice dimension
-        slice_data = data[:, :, slice_index]
-        print(f"Slice index: {slice_index}, Slice shape: {slice_data.shape}")
+        # Generate paths for all slices
+        slice_paths = []
 
-        # Check for empty slices
-        if slice_data.size == 0 or slice_data.shape[0] == 0 or slice_data.shape[1] == 0:
-            print(f"Skipping empty slice at index {slice_index}")
-            continue
+        for slice_index in range(data.shape[2]):  # Assuming the third dimension is the slice dimension
+            slice_data = data[:, :, slice_index]
+            print(f"Slice index: {slice_index}, Slice shape: {slice_data.shape}")
 
-        # Normalize the slice data based on the file type
-        if file_type in normalization_params:
-            vmin, vmax = normalization_params[file_type]
+            # Check for empty slices
+            if slice_data.size == 0 or slice_data.shape[0] == 0 or slice_data.shape[1] == 0:
+                print(f"Skipping empty slice at index {slice_index}")
+                continue
 
-            slice_data = normalize(slice_data, vmin=vmin, vmax=vmax)
-        else:
-            # If no normalization parameters are defined for the file type, you can choose to skip normalization
-            print(f"No normalization parameters for file type: {file_type}")
+            # Normalize the slice data based on the file type
+            if file_type in normalization_params:
+                vmin, vmax = normalization_params[file_type]
 
-        # Ensure the data type is appropriate for imshow
-        slice_data = (slice_data * 255).astype(np.uint8)  # Convert to 8-bit grayscale
+                slice_data = normalize(slice_data, vmin=vmin, vmax=vmax)
+            else:
+                # If no normalization parameters are defined for the file type, you can choose to skip normalization
+                print(f"No normalization parameters for file type: {file_type}")
 
-        # Create the base image
-        plt.imshow(slice_data, cmap='gray')
-        plt.axis('off')
-        base_image_path = f'static/slice_{patient_name}_{file_type}_{slice_index}.png'
-        plt.savefig(base_image_path, bbox_inches='tight', pad_inches=0)
-        plt.close()
+            # Ensure the data type is appropriate for imshow
+            slice_data = (slice_data * 255).astype(np.uint8)  # Convert to 8-bit grayscale
+            print("Slice data type:", type(slice_data))  # Check the type
+            print("Slice data shape:", slice_data.shape)  # Check the shape
+            print("Slice data content:", slice_data)  # Print the actual data
+            print("Contains NaN:", np.isnan(slice_data).any())  # Check for NaN values
+            print("Contains Inf:", np.isinf(slice_data).any())  # Check for Inf values
 
-        # If the file type is not ground_truth, overlay the ground truth if it exists
-        if file_type != 'ground_truth' and ground_truth_file:
-            ground_truth_temp_path = os.path.join('temp_files', ground_truth_file.filename)
-            with open(ground_truth_temp_path, 'wb') as f:
-                f.write(ground_truth_file.file_data)
+            # Create the base image
+            plt.imshow(slice_data, cmap='gray', vmin=0, vmax=255)
+            plt.axis('off')
+            base_image_path = f'static/slice_{patient_name}_{file_type}_{slice_index}.png'
+            plt.savefig(base_image_path, bbox_inches='tight', pad_inches=0)
+            plt.close()
 
-            ground_truth_img = nib.load(ground_truth_temp_path)
-            ground_truth_data = ground_truth_img.get_fdata()[:, :, slice_index].astype(np.float32)
+            # If the file type is not ground_truth, overlay the ground truth if it exists
+            if file_type != 'ground_truth' and ground_truth_file:
+                ground_truth_temp_path = os.path.join('temp_files', ground_truth_file.filename)
+                # Open the source file and read its contents
+                with open(ground_truth_file.file_path, 'rb') as source_file:
+                    with open(ground_truth_temp_path, 'wb') as dest_file:
+                        dest_file.write(source_file.read())  # Write the bytes to the destination file
 
-            # Create an overlay
-            overlay_image = Image.new('RGB', slice_data.shape[::-1])
+                # Load the NIfTI image from the temporary file
 
-            # Convert slice_data to an image
-            base_image = Image.fromarray(slice_data).convert('RGBA')
+                ground_truth_img = nib.load(ground_truth_temp_path)
+                ground_truth_data = ground_truth_img.get_fdata()[:, :, slice_index].astype(np.float32)
 
-            # Create a transparent overlay
-            overlay = np.zeros((*ground_truth_data.shape, 4), dtype=np.uint8)  # (H, W, 4) for RGBA
+                # Create an overlay
+                overlay_image = Image.new('RGB', slice_data.shape[::-1])
 
-            # Set the overlay color (e.g., red with 100 alpha)
-            overlay_color = (255, 0, 0, 50)  # Semi-transparent red
+                # Convert slice_data to an image
+                base_image = Image.fromarray(slice_data).convert('RGBA')
 
-            # Apply the overlay only where segmentation is white
-            overlay[:, :, 3] = 0  # Ensure full transparency as default
-            overlay[ground_truth_data > 0.5] = overlay_color
+                # Create a transparent overlay
+                overlay = np.zeros((*ground_truth_data.shape, 4), dtype=np.uint8)  # (H, W, 4) for RGBA
 
-            # Convert overlay to an image
-            overlay_image = Image.fromarray(overlay, mode='RGBA')
+                # Set the overlay color (e.g., red with 100 alpha)
+                overlay_color = (255, 0, 0, 50)  # Semi-transparent red
 
-            combined_image = base_image.copy()
-            combined_image.paste(overlay_image, (0, 0), overlay_image)  # Ensure proper transparency
-            # Save the combined image
-            combined_image_path = f'static/slice_{patient_name}_{file_type}_overlay_{slice_index}.png'
-            combined_image.save(combined_image_path)
+                # Apply the overlay only where segmentation is white
+                overlay[:, :, 3] = 0  # Ensure full transparency as default
+                overlay[ground_truth_data > 0.5] = overlay_color
 
-            # Use the combined image path for the overlay
-            slice_paths.append(combined_image_path)
-        else:
-            # If it's a ground truth image, just use the base image
-            slice_paths.append(base_image_path)
+                # Convert overlay to an image
+                overlay_image = Image.fromarray(overlay, mode='RGBA')
 
-    return jsonify({'slices': slice_paths})  # Return the slice paths as JSON
+                combined_image = base_image.copy()
+                combined_image.paste(overlay_image, (0, 0), overlay_image)  # Ensure proper transparency
+                # Save the combined image
+                combined_image_path = f'static/slice_{patient_name}_{file_type}_overlay_{slice_index}.png'
+                combined_image.save(combined_image_path)
+
+                # Use the combined image path for the overlay
+                slice_paths.append(combined_image_path)
+            else:
+                # If it's a ground truth image, just use the base image
+                slice_paths.append(base_image_path)
+
+        return jsonify({'slices': slice_paths})  # Return the slice paths as JSON
+
+
+def is_remote_file(file_path):
+    return file_path.startswith('/nfs') or file_path.startswith('/home')
+
+def handle_remote_file(file_path, patient_name, file_type, ground_truth_file=None):
+    print("starting remote function")
+
+    jpeg_images = []
+
+    try:
+        # Setup SFTP connection
+        transport = paramiko.Transport((SFTP_HOST, SFTP_PORT))
+        transport.connect(username=SFTP_USERNAME, password=SFTP_PASSWORD)
+        sftp = paramiko.SFTPClient.from_transport(transport)
+
+        # List all folders in the remote directory
+        all_folders = sorted(sftp.listdir(file_path))
+
+        for folder in all_folders:
+            folder_path = os.path.join(file_path, folder)
+
+            # Check if it's a directory
+            if sftp.stat(folder_path).st_mode & 0o40000:
+                remote_files = sftp.listdir(folder_path)
+
+                # Separate TIFF and DICOM (or no-extension) files
+                tiff_files = sorted(
+                    [f for f in remote_files if f.endswith('.tiff') or f.endswith('.tif')]
+                )
+                dicom_files = sorted(
+                    [f for f in remote_files if not f.endswith(('.tiff', '.tif'))]
+                )
+
+                # Process TIFF files
+                for tiff_file in tiff_files:
+                    tiff_file_path = os.path.join(folder_path, tiff_file)
+                    jpeg_images.extend(process_image_file(sftp, tiff_file_path, folder, tiff_file))
+
+                # Process DICOM (or no-extension) files
+                for dicom_file in dicom_files:
+                    dicom_file_path = os.path.join(folder_path, dicom_file)
+                    jpeg_images.extend(process_dicom_file_remote(sftp, dicom_file_path, folder, dicom_file))
+
+            else:
+                # If it's not a folder, just process the file as DICOM (for non-nested cases)
+                dicom_file_path = os.path.join(file_path, folder)
+                jpeg_images.extend(process_dicom_file_remote(sftp, dicom_file_path, "", folder))
+
+        sftp.close()
+        transport.close()
+
+    except Exception as e:
+        print(f"SFTP error: {e}")
+        return jsonify({'error': 'Failed to access the SFTP server'}), 500
+
+    # Return the base64-encoded JPEG images
+    base64_images = [f"data:image/jpeg;base64,{img['base64']}" for img in jpeg_images]
+    return jsonify(base64_images)
+
+
+def process_image_file(sftp, file_path, folder, file_name):
+    jpeg_images = []
+    try:
+        with sftp.open(file_path, 'rb') as remote_file:
+            tiff_bytes = remote_file.read()
+
+        tiff_stream = io.BytesIO(tiff_bytes)
+        with Image.open(tiff_stream) as img:
+            img = img.convert('RGB')
+            jpeg_stream = io.BytesIO()
+            img.save(jpeg_stream, format='JPEG')
+            jpeg_stream.seek(0)
+            jpeg_base64 = base64.b64encode(jpeg_stream.read()).decode('utf-8')
+            jpeg_images.append({
+                'filename': f"{folder}_{file_name}",
+                'base64': jpeg_base64
+            })
+
+    except Exception as e:
+        print(f"TIFF processing error: {e}")
+
+    return jpeg_images
+
+def process_dicom_file_remote(sftp, file_path, folder, file_name):
+    jpeg_images = []
+
+    try:
+        # Check if the file has a DICOM-like format (without extension)
+        dicom_file_path = file_path
+        if len(file_name.split('.')[-1]) == 0:  # If there's no extension
+            dicom_file_path = f"{file_path}.dcm"  # Add .dcm extension to the file path
+
+        print(f"Attempting to open file: {dicom_file_path}")
+
+        with sftp.open(dicom_file_path, 'rb') as remote_file:
+            dicom_bytes = remote_file.read()
+
+        dicom_stream = io.BytesIO(dicom_bytes)
+        try:
+            dicom_data = pydicom.dcmread(dicom_stream)
+        except Exception as e:
+            print(f"Failed to read DICOM data from {dicom_file_path}: {e}")
+            return jpeg_images  # If it's not a valid DICOM file, skip
+
+        # Check if it's a valid DICOM file with PixelData
+        if 'PixelData' in dicom_data:
+            print(f"Pixel data found in DICOM file: {dicom_file_path}")
+            img_array = dicom_data.pixel_array
+            img = Image.fromarray(img_array)
+            img = img.convert('RGB')  # Ensure the image is in RGB format
+
+            jpeg_stream = io.BytesIO()
+            img.save(jpeg_stream, format='JPEG')
+            jpeg_stream.seek(0)
+            jpeg_base64 = base64.b64encode(jpeg_stream.read()).decode('utf-8')
+
+            jpeg_images.append({
+                'filename': f"{folder}_{file_name}_DCM",
+                'base64': jpeg_base64
+            })
+            print(f"Converted DICOM to JPEG and encoded it to base64")
+
+    except Exception as e:
+        print(f"Error processing file {file_name} in folder {folder}: {e}")
+
+    return jpeg_images
+
+
+def process_dicom_file(file_path):
+    try:
+        dcm = pydicom.dcmread(file_path)
+        pixel_array = dcm.pixel_array
+
+        # Convert to PIL Image
+        image = Image.fromarray(pixel_array).convert("L")
+        buffer = io.BytesIO()
+        image.save(buffer, format="JPEG")
+        encoded_image = base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+        base64_images = [f"data:image/jpeg;base64,{encoded_image}"]
+        return jsonify(base64_images)
+
+    except Exception as e:
+        return jsonify({'error': f'Failed to process DICOM: {str(e)}'}), 500

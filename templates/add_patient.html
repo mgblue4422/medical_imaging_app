@@ -9,7 +9,7 @@
 <body>
     <div class="container">
         <h1 class="mt-5">Add Patient Data</h1>
-        <form method="POST" enctype="multipart/form-data">
+        <form method="POST" action="/add_patient" enctype="multipart/form-data">
             {{ form.hidden_tag() }}
             <div class="form-group">
                 {{ form.patient_name.label(class="form-label") }}

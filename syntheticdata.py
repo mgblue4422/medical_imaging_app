@@ -56,7 +56,7 @@ def stroke_case(case_id):
     return render_template('syntheticviewer.html', case=case,  case_id = case_id)  # Pass the case to the template
 
 
-
+#function to  get images from tiff to jpeg
 @syntheticdata.route('/tiff_slices/<synthetic_patient_id>', methods=['GET'])
 def get_tiff_slices(synthetic_patient_id):
     print(f"Received request for patient ID: {synthetic_patient_id}")
@@ -119,6 +119,12 @@ temp_jpeg_directory = os.path.join(current_directory, 'temp_files')
 # Ensure the temporary directory exists
 os.makedirs(temp_jpeg_directory, exist_ok=True)
 
+from flask import jsonify
+from PIL import Image
+import paramiko
+import io
+import base64
+import os
 
 @syntheticdata.route('/patients/<int:patient_id>/ctp_files/tiff_slices', methods=['GET'])
 def get_tiff_slices_from_ctp(patient_id):
@@ -131,12 +137,10 @@ def get_tiff_slices_from_ctp(patient_id):
 
     # Retrieve the CTP files associated with the patient
     ctp_files = CTPFile.query.filter_by(patient_id=patient_id).all()
-
     if not ctp_files:
         return jsonify({'message': 'No CTP files found for this patient'}), 404
 
-    tiff_file_paths = []
-    jpeg_file_paths = []  # List to store paths of converted JPEG files
+    jpeg_images = []  # Store base64 JPEG images
 
     # Iterate through each CTP file to get the TIFF files from the remote folder
     for ctp_file in ctp_files:
@@ -150,63 +154,58 @@ def get_tiff_slices_from_ctp(patient_id):
 
             # List all folders in the remote directory
             all_folders = sftp.listdir(remote_folder_path)
-
-            # Limit to the first 13 folders
-            folders_to_process = all_folders
+            folders_to_process = all_folders  # Modify here if you want to limit folders
 
             for index, folder in enumerate(folders_to_process):
                 folder_path = os.path.join(remote_folder_path, folder)
 
                 # Check if the path is a directory
-                if sftp.stat(folder_path).st_mode & 0o40000:  # Check if it's a directory
-                    # List all files in the current folder
+                if sftp.stat(folder_path).st_mode & 0o40000:
                     remote_files = sftp.listdir(folder_path)
+
 
                     # Filter for TIFF files
                     tiff_files = [f for f in remote_files if f.endswith('.tiff') or f.endswith('.tif')]
+                    print(f"TIFF files found in folder {folder}: {tiff_files}")
 
-                    # Determine the number of images to process
-                    if index == 12:  # 13th folder (index 12)
-                        max_images = 16
-                    else:
-                        max_images = 20
+                    # Limit images per folder
+                    max_images = 16 if index == 12 else 20
+                    tiff_files = tiff_files[:max_images]
 
-                    # Process only the first max_images from the folder
                     for tiff_file in tiff_files:
                         tiff_file_path = os.path.join(folder_path, tiff_file)
-                        tiff_file_paths.append(tiff_file_path)
-
-                        # Download the TIFF file to the server
-                        local_tiff_path = os.path.join(temp_jpeg_directory, tiff_file)  # Temporary local path
                         try:
-                            sftp.get(tiff_file_path, local_tiff_path)
-                        except Exception as e:
-                            print(f"Error downloading TIFF file {tiff_file}: {e}")
-                            continue  # Skip to the next file if download fails
+                            with sftp.open(tiff_file_path, 'rb') as remote_file:
+                                tiff_bytes = remote_file.read()
 
-                        # Convert the TIFF file to JPEG
-                        try:
-                            with Image.open(local_tiff_path) as img:
-                                img = img.convert('RGB')  # Convert to RGB if needed
-                                # Create a unique JPEG file name by including the folder name
-                                jpeg_file_name = f"{folder}_{tiff_file.replace('.tiff', '').replace('.tif', '')}.jpg"
-                                jpeg_file_path = os.path.join(temp_jpeg_directory, jpeg_file_name)
-                                img.save(jpeg_file_path, format='JPEG')  # Save the JPEG file
-                                jpeg_file_paths.append(os.path.relpath(jpeg_file_path, current_directory))  # Store relative path  # Add the JPEG path to the list
+                            tiff_stream = io.BytesIO(tiff_bytes)
+                            with Image.open(tiff_stream) as img:
+                                img = img.convert('RGB')
+                                jpeg_stream = io.BytesIO()
+                                img.save(jpeg_stream, format='JPEG')
+                                jpeg_stream.seek(0)
+
+                                jpeg_base64 = base64.b64encode(jpeg_stream.read()).decode('utf-8')
+                                jpeg_images.append({
+                                    'filename': f"{folder}_{tiff_file}",
+                                    'base64_jpeg': jpeg_base64
+                                })
                         except Exception as e:
-                            print(f"Error converting TIFF to JPEG for {tiff_file}: {e}")
-                            continue  # Skip to the next file if conversion fails
+                            print(f"Error processing {tiff_file}: {e}")
+                            continue
 
             sftp.close()
             transport.close()
+
         except Exception as e:
             print(f"Error accessing SFTP server: {e}")
             return jsonify({'error': 'Failed to access the SFTP server'}), 500
 
-    if not tiff_file_paths:
-        return jsonify({'message': 'No TIFF files found in the CTP folders for this patient'}), 404
+    if not jpeg_images:
+        return jsonify({'message': 'No TIFF images could be processed'}), 404
+    print(f"Returning {len(jpeg_images)} images")
 
-    return jsonify({'patient_id': patient.id, 'jpeg_file_paths': jpeg_file_paths}), 200
+    return jsonify({'patient_id': patient.id, 'images': jpeg_images}), 200
 
 #function to show example ctp images
 @syntheticdata.route('/get_images', methods=['GET'])
@@ -238,3 +237,71 @@ def get_images():
         return jsonify(image_list), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+
+
+
+
+@syntheticdata.route('/patients/<int:patient_id>/ctp_files/view_tiff_slices', methods=['GET'])
+def view_tiff_slices_from_ctp(patient_id):
+    patient = Patient.query.get(patient_id)
+    if not patient:
+        return jsonify({'error': 'Patient not found'}), 404
+
+    ctp_files = CTPFile.query.filter_by(patient_id=patient_id).all()
+    if not ctp_files:
+        return jsonify({'message': 'No CTP files found for this patient'}), 404
+
+    jpeg_images = []
+
+    for ctp_file in ctp_files:
+        remote_folder_path = ctp_file.file_path
+
+        try:
+            transport = paramiko.Transport((SFTP_HOST, SFTP_PORT))
+            transport.connect(username=SFTP_USERNAME, password=SFTP_PASSWORD)
+            sftp = paramiko.SFTPClient.from_transport(transport)
+
+            all_folders = sftp.listdir(remote_folder_path)
+            folders_to_process = all_folders[:13]  # Only process first 13 folders
+
+            for index, folder in enumerate(folders_to_process):
+                folder_path = os.path.join(remote_folder_path, folder)
+
+                if sftp.stat(folder_path).st_mode & 0o40000:
+                    remote_files = sftp.listdir(folder_path)
+                    tiff_files = [f for f in remote_files if f.endswith('.tiff') or f.endswith('.tif')]
+
+                    max_images = 16 if index == 12 else 20
+
+                    for tiff_file in tiff_files[:max_images]:
+                        tiff_file_path = os.path.join(folder_path, tiff_file)
+
+                        try:
+                            with sftp.open(tiff_file_path, 'rb') as remote_file:
+                                tiff_bytes = remote_file.read()
+
+                            tiff_stream = io.BytesIO(tiff_bytes)
+                            with Image.open(tiff_stream) as img:
+                                img = img.convert('RGB')
+                                jpeg_stream = io.BytesIO()
+                                img.save(jpeg_stream, format='JPEG')
+                                jpeg_stream.seek(0)
+                                jpeg_base64 = base64.b64encode(jpeg_stream.read()).decode('utf-8')
+                                jpeg_images.append({
+                                    'filename': f"{folder}_{tiff_file}",
+                                    'base64': jpeg_base64
+                                })
+
+                        except Exception as e:
+                            print(f"TIFF processing error: {e}")
+                            continue
+
+            sftp.close()
+            transport.close()
+        except Exception as e:
+            print(f"SFTP error: {e}")
+            return jsonify({'error': 'Failed to access the SFTP server'}), 500
+
+    return render_template('view_images.html', patient_id=patient_id, images=jpeg_images)
