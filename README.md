@@ -21,7 +21,7 @@ This project is a minimal web app to view raw DICOM (`.dcm`) and NIfTI (`.nii` /
 Install with:
 ```bash
 pip install flask
-
+```
 
 ---
 
