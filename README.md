@@ -4,10 +4,13 @@ To run the application, you need to update the paths in the code to reflect the 
 
 ## Step 1: Update user Data  `config.py`
 
-Change the user and pass code to your login details for the Uis Server. 
+Change the user and pass code to your login details for the Uis Server.
 
-SFTP_USERNAME = 'u123456' #replace with actual username
-SFTP_PASSWORD = 'examplepassword'  # Replace with your actual password
+SFTP_USERNAME = 'u123456' - replace with actual username 
+
+SFTP_PASSWORD = 'examplepassword' - Replace with your actual password
+
+
 ---
 
 
