@@ -1,3 +1,32 @@
+#  Web-based DICOM/NIfTI Viewer using Flask + JavaScript
+
+This project is a minimal web app to view raw DICOM (`.dcm`) and NIfTI (`.nii` / `.nii.gz`) medical images **directly in the browser**  converting them to PNG/JPEG. It uses a **Flask backend** to serve files and a **JavaScript frontend** to render the images.
+
+---
+
+## 📌 Features
+
+
+- Simple Python Flask backend
+-  Quick to launch and lightweight
+
+---
+
+## 🛠 Requirements
+
+### Backend (Python)
+- Python 3.7+
+- Flask
+
+Install with:
+```bash
+pip install flask
+
+
+
+
+
+
 # Setup Instructions for Running the Application
 
 To run the application, you need to update the paths in the code to reflect the correct locations for the isles patient data. Please follow the instructions below:
