@@ -35,7 +35,7 @@ The **Info Patients** section allows users to manage and view patient informatio
 ### 4. List
 The **List** feature provides a comprehensive overview of all patients, making it easy to navigate through records and find specific information quickly.
 
-<img src="https://github.com/mgblue4422/medical_imaging_app/blob/ec4015519de102097fe2fcc7f13b27fb5f5b919b/images/list.png?raw=true" alt="List" width="500" height="300">
+<img src="https://github.com/mgblue4422/medical_imaging_app/blob/ec4015519de102097fe2fcc7f13b27fb5f5b919b/images/list.png?raw=true" alt="List" width="1000" height="600">
 
 ---
 
