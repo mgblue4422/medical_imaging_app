@@ -10,6 +10,14 @@ This project is a web app to view raw DICOM (`.dcm`) and NIfTI (`.nii` / `.nii.g
 - Simple Python Flask backend
 -  Quick to launch and lightweight
 
+
+![Analysis](https://github.com/mgblue4422/medical_imaging_app/blob/ec4015519de102097fe2fcc7f13b27fb5f5b919b/images/analysis.png)
+![Dashboard](https://github.com/mgblue4422/medical_imaging_app/blob/ec4015519de102097fe2fcc7f13b27fb5f5b919b/images/dash.png)
+![Info patients](https://github.com/mgblue4422/medical_imaging_app/blob/ec4015519de102097fe2fcc7f13b27fb5f5b919b/images/info.png)
+![List](https://github.com/mgblue4422/medical_imaging_app/blob/ec4015519de102097fe2fcc7f13b27fb5f5b919b/images/list.png)
+![Manual Annotation](https://github.com/mgblue4422/medical_imaging_app/blob/ec4015519de102097fe2fcc7f13b27fb5f5b919b/images/manual%20annotation.png)
+
+
 ---
 
 ## 🛠 Requirements
