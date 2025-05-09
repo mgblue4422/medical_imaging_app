@@ -1,4 +1,4 @@
-#  Web-based DICOM/NIfTI Viewer using Flask + JavaScript
+#  Web-based DICOM/NIfTI Viewer using Flask
 
 This project is a web app to view raw DICOM (`.dcm`) and NIfTI (`.nii` / `.nii.gz`) medical images **directly in the browser**  converting them to PNG/JPEG. It uses a **Flask backend** to serve files and a **JavaScript frontend** to render the images.
 
@@ -11,11 +11,41 @@ This project is a web app to view raw DICOM (`.dcm`) and NIfTI (`.nii` / `.nii.g
 -  Quick to launch and lightweight
 
 
-![Analysis](https://github.com/mgblue4422/medical_imaging_app/blob/ec4015519de102097fe2fcc7f13b27fb5f5b919b/images/analysis.png)
-![Dashboard](https://github.com/mgblue4422/medical_imaging_app/blob/ec4015519de102097fe2fcc7f13b27fb5f5b919b/images/dash.png)
-![Info patients](https://github.com/mgblue4422/medical_imaging_app/blob/ec4015519de102097fe2fcc7f13b27fb5f5b919b/images/info.png)
-![List](https://github.com/mgblue4422/medical_imaging_app/blob/ec4015519de102097fe2fcc7f13b27fb5f5b919b/images/list.png)
-![Manual Annotation](https://github.com/mgblue4422/medical_imaging_app/blob/ec4015519de102097fe2fcc7f13b27fb5f5b919b/images/manual%20annotation.png)
+# Features of the Medical Imaging App
+
+### 1. Analysis
+The **Analysis** feature provides advanced tools for processing and interpreting medical images, allowing users to gain insights and make informed decisions based on the data presented.
+
+<img src="https://github.com/mgblue4422/medical_imaging_app/blob/ec4015519de102097fe2fcc7f13b27fb5f5b919b/images/analysis.png?raw=true" alt="Analysis" width="500" height="300">
+
+---
+
+### 2. Dashboard
+The **Dashboard** offers a user-friendly interface that displays key metrics and visualizations, enabling users to monitor their data effectively and access important information at a glance.
+
+<img src="https://github.com/mgblue4422/medical_imaging_app/blob/ec4015519de102097fe2fcc7f13b27fb5f5b919b/images/dash.png?raw=true" alt="Dashboard" width="500" height="300">
+
+---
+
+### 3. Info Patients
+The **Info Patients** section allows users to manage and view patient information seamlessly, ensuring that all relevant data is easily accessible for healthcare professionals.
+
+<img src="https://github.com/mgblue4422/medical_imaging_app/blob/ec4015519de102097fe2fcc7f13b27fb5f5b919b/images/info.png?raw=true" alt="Info Patients" width="500" height="300">
+
+---
+
+### 4. List
+The **List** feature provides a comprehensive overview of all patients and their associated data, making it easy to navigate through records and find specific information quickly.
+
+<img src="https://github.com/mgblue4422/medical_imaging_app/blob/ec4015519de102097fe2fcc7f13b27fb5f5b919b/images/list.png?raw=true" alt="List" width="500" height="300">
+
+---
+
+### 5. Manual Annotation
+The **Manual Annotation** tool enables users to annotate medical images directly, facilitating detailed analysis and collaboration among healthcare professionals.
+
+<img src="https://github.com/mgblue4422/medical_imaging_app/blob/ec4015519de102097fe2fcc7f13b27fb5f5b919b/images/manual%20annotation.png?raw=true" alt="Manual Annotation" width="500" height="300">
+
 
 
 ---
