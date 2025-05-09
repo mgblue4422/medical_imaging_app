@@ -10,20 +10,19 @@ This project is a web app to view raw DICOM (`.dcm`) and NIfTI (`.nii` / `.nii.g
 - Simple Python Flask backend
 -  Quick to launch and lightweight
 
+---
 
-### 1. Analysis
+### 1. Dashboard
+The **Dashboard** offers a user-friendly interface that displays key metrics and visualizations, enabling users to monitor their data effectively and access important information at a glance. This feature provides  tools for processing and interpreting medical images, allowing users to gain insights and make informed decisions based on the data presented.
+
+<img src="https://github.com/mgblue4422/medical_imaging_app/blob/ec4015519de102097fe2fcc7f13b27fb5f5b919b/images/dash.png?raw=true" alt="Dashboard" width="1000" height="500">
+
+---
+### 2. Analysis
 This page is designed to provide images generated from research investigations conducted at UiS. The **Analysis** feature offers a regional analysis of cerebral perfusion patterns across different patient populations. Users can explore these images to enhance their awareness and understanding of perfusion metrics in clinical practice.
 
 <img src="https://github.com/mgblue4422/medical_imaging_app/blob/ec4015519de102097fe2fcc7f13b27fb5f5b919b/images/analysis.png?raw=true" alt="Analysis" width="1000" height="500">
 
----
-
-### 2. Dashboard
-The **Dashboard** offers a user-friendly interface that displays key metrics and visualizations, enabling users to monitor their data effectively and access important information at a glance. This feature provides  tools for processing and interpreting medical images, allowing users to gain insights and make informed decisions based on the data presented.
-
-<img src="https://github.com/mgblue4422/medical_imaging_app/blob/ec4015519de102097fe2fcc7f13b27fb5f5b919b/images/dash.png?raw=true" alt="Dashboard" width="500" height="300">
-
----
 
 ### 3. Info Patients
 The **Info Patients** section allows users to manage and view patient information , ensuring that all relevant data is easily accessible.
